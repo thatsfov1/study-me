@@ -8,7 +8,7 @@ import SingleGoal from "../components/SingleGoal";
 const Dashboard = () => {
   const [goals, setGoals] = useState<TGoal[]>([]);
   const [goalTitle, setGoalTitle] = useState("");
-  const [editMode, setEditMode] = useState(false);
+  
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -21,11 +21,7 @@ const Dashboard = () => {
       setGoals((prev) => [...prev, goal]);
       setGoalTitle("");
     }
-  };
-  // TODO: end edit funtional
-  const handleEditGoal = () => {
-    setEditMode(true);
-  };
+  }; 
 
   const handleDeleteGoal = (id: string) => {
     const filteredGoals = goals.filter((goal) => goal.id !== id);
@@ -45,8 +41,8 @@ const Dashboard = () => {
               <SingleGoal
                 key={goal.id}
                 handleDeleteGoal={handleDeleteGoal}
-                handleEditGoal={handleEditGoal}
                 goal={goal}
+                setGoals={setGoals}
               />
             ))}
         </ul>
