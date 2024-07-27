@@ -1,11 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { TGoal } from "../types/goals";
+import { TGoal } from "../../app/types/goals";
 import { FaRegClock, FaPen, FaTrashCan } from "react-icons/fa6";
-import Modal from "./Modal";
-import Timer from "./Timer";
+import Modal from "../../app/components/Modal";
+import Timer from "./timer";
 import { IoClose } from "react-icons/io5";
-
 
 type SingleGoalProps = {
   goal: TGoal;
@@ -37,7 +36,7 @@ const SingleGoal = ({ goal, handleDeleteGoal, setGoals }: SingleGoalProps) => {
       handleBlur();
     }
   };
-  
+
   return (
     <li
       onMouseEnter={() => setShowTools(true)}
@@ -78,13 +77,16 @@ const SingleGoal = ({ goal, handleDeleteGoal, setGoals }: SingleGoalProps) => {
       ) : (
         ""
       )}
-      <Modal active={showTimeModal} setActive={setShowTimeModal} >
-      <div onClick={()=> setShowTimeModal(false)} className="absolute top-2 right-2 text-slate-500 cursor-pointer">
+      <Modal active={showTimeModal} setActive={setShowTimeModal}>
+        <div
+          onClick={() => setShowTimeModal(false)}
+          className="absolute top-2 right-2 text-slate-500 cursor-pointer"
+        >
           <IoClose />
         </div>
         {goal.title}
         <p>Set the time of task</p>
-        <Timer setActive={setShowTimeModal} goal={goal} setGoals={setGoals}/>
+        <Timer setActive={setShowTimeModal} goal={goal} setGoals={setGoals} />
       </Modal>
     </li>
   );

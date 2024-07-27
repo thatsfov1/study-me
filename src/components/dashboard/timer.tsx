@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { TGoal } from "../types/goals";
+import { TGoal } from "../../app/types/goals";
 
 const TimerWrapper = styled.div`
   display: flex;

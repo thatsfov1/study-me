@@ -1,0 +1,175 @@
+"use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import clsx from "clsx";
+import Link from "next/link";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import Loader from "@/components/Loader";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { MailCheck } from "lucide-react";
+import { FormSchema } from "@/lib/types";
+
+const SignUpFormSchema = z
+  .object({
+    email: z
+      .string()
+      .describe("Email")
+      .email({ message: "Invalid email address" }),
+    password: z
+      .string()
+      .describe("Password")
+      .min(6, "Password must be at least 6 characters"),
+    confirmPassword: z
+      .string()
+      .describe("Confirm Password")
+      .min(6, "Password must be at least 6 characters"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Password don't match",
+    path: ["confirmPassword"],
+  });
+
+const Signup = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [submitError, setSubmitError] = useState("");
+  const [confirmation, setConfirmation] = useState(false);
+
+  const codeExchangeError = useMemo(() => {
+    if (!searchParams) return "";
+    return searchParams.get("error_description");
+  }, [searchParams]);
+
+  const confirmationAndErrorStyles = useMemo(
+    () =>
+      clsx("bg-primary", {
+        "bg-red-500/10": codeExchangeError,
+        "border-red-500/50": codeExchangeError,
+        "text-red-700": codeExchangeError,
+      }),
+    []
+  );
+
+  const form = useForm<z.infer<typeof SignUpFormSchema>>({
+    mode: "onChange",
+    resolver: zodResolver(SignUpFormSchema),
+  });
+
+  const isLoading = form.formState.isSubmitting;
+
+  const onSubmit = async ({email, password}: z.infer<typeof FormSchema>) => {
+    
+  };
+
+  const signUpHandler = () => {};
+
+  return (
+    <Form {...form}>
+      <form
+        onChange={() => {
+          if (submitError) setSubmitError("");
+        }}
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="w-full flex flex-col sm:justify-center sm:w-[400px] space-y-6"
+      >
+        <Link href="/" className="w-full flex justify-left items-center">
+          {/* <Image /> suppose to be a logo */}
+          <span className="font-semibold text-4xl first-letter:ml-2">
+            study-me
+          </span>
+        </Link>
+        <FormDescription>Productivity app</FormDescription>
+        {!confirmation && !codeExchangeError && (
+          <>
+            <FormField
+              disabled={isLoading}
+              control={form.control}
+              name="email"
+              render={(field) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="john@email.com"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              disabled={isLoading}
+              control={form.control}
+              name="password"
+              render={(field) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Your password"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              disabled={isLoading}
+              control={form.control}
+              name="confirmPassword"
+              render={(field) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Confirm your password"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full p-6">
+              {!isLoading ? "Create an account" : <Loader />}
+            </Button>
+          </>
+        )}
+        <span className="self-container">
+          Already have an account?{" "}
+          <Link href="/login" className="text-indigo-500">
+            Log in
+          </Link>
+        </span>
+
+        {(confirmation || codeExchangeError) && (
+          <>
+            <Alert className={confirmationAndErrorStyles}>
+              {!codeExchangeError && <MailCheck className="h-4 w-4" />}
+              <AlertTitle>
+                {codeExchangeError ? "Invalid Link" : "Check your email."}
+              </AlertTitle>
+              <AlertDescription>
+                {codeExchangeError || "An email confirmation has been sent."}
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
+      </form>
+    </Form>
+  );
+};
+
+export default Signup;

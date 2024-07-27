@@ -1,14 +1,13 @@
 "use client";
 import React, { useState } from "react";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../../components/dashboard/sidebar";
 import { v4 as uuidv4 } from "uuid";
 import { TGoal } from "../types/goals";
-import SingleGoal from "../components/SingleGoal";
+import SingleGoal from "../../components/dashboard/single-goal";
 
 const Dashboard = () => {
   const [goals, setGoals] = useState<TGoal[]>([]);
   const [goalTitle, setGoalTitle] = useState("");
-  
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -21,7 +20,7 @@ const Dashboard = () => {
       setGoals((prev) => [...prev, goal]);
       setGoalTitle("");
     }
-  }; 
+  };
 
   const handleDeleteGoal = (id: string) => {
     const filteredGoals = goals.filter((goal) => goal.id !== id);
