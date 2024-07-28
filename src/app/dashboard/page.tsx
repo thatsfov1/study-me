@@ -1,40 +1,66 @@
-"use client";
 import React, { useState } from "react";
-import Sidebar from "../../components/dashboard/sidebar";
 import { v4 as uuidv4 } from "uuid";
 import { TGoal } from "../types/goals";
 import SingleGoal from "../../components/dashboard/single-goal";
+import { cookies } from "next/headers";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import db from "@/lib/supabase/db";
+import { redirect } from "next/navigation";
+import DashboardSetup from "@/components/dashboard/dashboard-setup";
+import { getUserSubscriptionStatus } from "@/lib/supabase/queries";
 
-const Dashboard = () => {
-  const [goals, setGoals] = useState<TGoal[]>([]);
-  const [goalTitle, setGoalTitle] = useState("");
+const Dashboard = async () => {
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault();
-    if (goalTitle.length > 0) {
-      const goal = {
-        id: uuidv4(),
-        title: goalTitle,
-      };
+  const supabase = createServerComponentClient({cookies})
+  const {data:{user}} = await supabase.auth.getUser();
+  if(!user) return
 
-      setGoals((prev) => [...prev, goal]);
-      setGoalTitle("");
-    }
-  };
+  const session = await db.query.sessions.findFirst({
+    where: (session, {eq}) => eq(session.session_owner, user.id) 
+  })
 
-  const handleDeleteGoal = (id: string) => {
-    const filteredGoals = goals.filter((goal) => goal.id !== id);
-    setGoals(filteredGoals);
-  };
+  const {data:subscription, error:subscriptionError} = await getUserSubscriptionStatus(user.id) 
+
+  if(subscriptionError) return;
+  
+  if(!session){
+    return (
+    <div className="bg-background h-screen w-screen flex justify-center items-center">
+      <DashboardSetup user={user} subscription={subscription}></DashboardSetup>
+    </div>
+    )
+  } 
+
+  redirect(`/dashboard/${session.id}`)
+
+  // const [goals, setGoals] = useState<TGoal[]>([]);
+  // const [goalTitle, setGoalTitle] = useState("");
+
+  // const handleSubmit = (e: any) => {
+  //   e.preventDefault();
+  //   if (goalTitle.length > 0) {
+  //     const goal = {
+  //       id: uuidv4(),
+  //       title: goalTitle,
+  //     };
+
+  //     setGoals((prev) => [...prev, goal]);
+  //     setGoalTitle("");
+  //   }
+  // };
+
+  // const handleDeleteGoal = (id: string) => {
+  //   const filteredGoals = goals.filter((goal) => goal.id !== id);
+  //   setGoals(filteredGoals);
+  // };
 
   return (
     <div className="flex">
-      <Sidebar />
       <div className="px-8 py-4 relative w-[80vw]">
         <h1 className="text-3xl font-bold text-slate-800">
           What's your goal for today's session
         </h1>
-        <ul className="p-4">
+        {/* <ul className="p-4">
           {goals &&
             goals.map((goal: TGoal) => (
               <SingleGoal
@@ -62,7 +88,7 @@ const Dashboard = () => {
           <div className="absolute bottom-4 right-4 py-2 px-8 bg-slate-200 rounded-lg cursor-pointer">
             Skip this part
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

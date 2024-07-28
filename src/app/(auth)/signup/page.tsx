@@ -7,8 +7,8 @@ import {
   FormControl,
   FormDescription,
   FormField,
-  FormItem,
   FormMessage,
+  FormItem,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,24 +20,22 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MailCheck } from "lucide-react";
 import { FormSchema } from "@/lib/types";
+import { actionSignUpUser } from "@/lib/server-actions/auth-actions";
 
 const SignUpFormSchema = z
   .object({
-    email: z
-      .string()
-      .describe("Email")
-      .email({ message: "Invalid email address" }),
+    email: z.string().describe("Email").email({ message: "Invalid Email" }),
     password: z
       .string()
       .describe("Password")
-      .min(6, "Password must be at least 6 characters"),
+      .min(6, "Password must be minimum 6 characters"),
     confirmPassword: z
       .string()
       .describe("Confirm Password")
-      .min(6, "Password must be at least 6 characters"),
+      .min(6, "Password must be minimum 6 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Password don't match",
+    message: "Passwords don't match.",
     path: ["confirmPassword"],
   });
 
@@ -54,26 +52,31 @@ const Signup = () => {
 
   const confirmationAndErrorStyles = useMemo(
     () =>
-      clsx("bg-primary", {
+      clsx("bg-indigo-500", {
         "bg-red-500/10": codeExchangeError,
         "border-red-500/50": codeExchangeError,
         "text-red-700": codeExchangeError,
       }),
-    []
+    [codeExchangeError]
   );
 
   const form = useForm<z.infer<typeof SignUpFormSchema>>({
     mode: "onChange",
     resolver: zodResolver(SignUpFormSchema),
+    defaultValues: { email: "", password: "", confirmPassword: "" },
   });
 
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmit = async ({email, password}: z.infer<typeof FormSchema>) => {
-    
+  const onSubmit = async ({ email, password }: z.infer<typeof FormSchema>) => {
+    const { error } = await actionSignUpUser({ email, password });
+    if (error) {
+      setSubmitError(error.message);
+      form.reset();
+      return;
+    }
+    setConfirmation(true);
   };
-
-  const signUpHandler = () => {};
 
   return (
     <Form {...form}>
@@ -97,7 +100,7 @@ const Signup = () => {
               disabled={isLoading}
               control={form.control}
               name="email"
-              render={(field) => (
+              render={({field}) => (
                 <FormItem>
                   <FormControl>
                     <Input
@@ -106,6 +109,7 @@ const Signup = () => {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -114,7 +118,7 @@ const Signup = () => {
               disabled={isLoading}
               control={form.control}
               name="password"
-              render={(field) => (
+              render={({field}) => (
                 <FormItem>
                   <FormControl>
                     <Input
@@ -123,6 +127,7 @@ const Signup = () => {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -130,7 +135,7 @@ const Signup = () => {
               disabled={isLoading}
               control={form.control}
               name="confirmPassword"
-              render={(field) => (
+              render={({field}) => (
                 <FormItem>
                   <FormControl>
                     <Input
@@ -139,6 +144,7 @@ const Signup = () => {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -147,6 +153,7 @@ const Signup = () => {
             </Button>
           </>
         )}
+        {submitError && <FormMessage>{submitError}</FormMessage>}
         <span className="self-container">
           Already have an account?{" "}
           <Link href="/login" className="text-indigo-500">

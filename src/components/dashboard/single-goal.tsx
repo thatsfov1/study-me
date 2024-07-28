@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { TGoal } from "../../app/types/goals";
 import { FaRegClock, FaPen, FaTrashCan } from "react-icons/fa6";
-import Modal from "../../app/components/Modal";
+import Modal from "../modal";
 import Timer from "./timer";
 import { IoClose } from "react-icons/io5";
 
