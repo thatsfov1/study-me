@@ -15,7 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import Loader from "@/components/Loader";
+import Loader from "@/components/global/loader";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { MailCheck } from "lucide-react";
@@ -100,7 +100,7 @@ const Signup = () => {
               disabled={isLoading}
               control={form.control}
               name="email"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
@@ -118,7 +118,7 @@ const Signup = () => {
               disabled={isLoading}
               control={form.control}
               name="password"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
@@ -135,7 +135,7 @@ const Signup = () => {
               disabled={isLoading}
               control={form.control}
               name="confirmPassword"
-              render={({field}) => (
+              render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input

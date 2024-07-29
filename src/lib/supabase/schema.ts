@@ -67,7 +67,7 @@ export const subscriptions = pgTable("subscriptions", {
 
 export const collaborators = pgTable('collaborators', {
   id: uuid('id').defaultRandom().primaryKey().notNull(),
-  session_d: uuid('session_id')
+  session_id: uuid('session_id')
     .notNull()
     .references(() => sessions.id, { onDelete: 'cascade' }),
   created_at: timestamp('created_at', {

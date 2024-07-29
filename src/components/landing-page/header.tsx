@@ -78,7 +78,7 @@ const Header = () => {
           </NavigationMenuContent>
             </NavigationMenuItem>
             {routes.map((route) => (
-              <NavigationMenuItem>
+              <NavigationMenuItem key={route.path}>
                 <Link href={route.path} legacyBehavior passHref>
                   <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                     {route.title}

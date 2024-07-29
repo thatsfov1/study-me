@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import Loader from "@/components/Loader";
+import Loader from "@/components/global/loader";
 import { Input } from "@/components/ui/input";
 import { actionLoginUser } from "@/lib/server-actions/auth-actions";
 
@@ -34,12 +34,12 @@ const Login = () => {
   const onSubmit: SubmitHandler<z.infer<typeof FormSchema>> = async (
     formData
   ) => {
-    const {error} = await actionLoginUser(formData)
-    if(error){
-      form.reset()
-      setSubmitError(error.message)
+    const { error } = await actionLoginUser(formData);
+    if (error) {
+      form.reset();
+      setSubmitError(error.message);
     }
-    router.replace('/dashboard')
+    router.replace("/dashboard");
   };
 
   return (
@@ -62,14 +62,10 @@ const Login = () => {
           disabled={isLoading}
           control={form.control}
           name="email"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input
-                  type="email"
-                  placeholder="john@email.com"
-                  {...field}
-                />
+                <Input type="email" placeholder="john@email.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -80,14 +76,10 @@ const Login = () => {
           disabled={isLoading}
           control={form.control}
           name="password"
-          render={({field}) => (
+          render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Your password"
-                  {...field}
-                />
+                <Input type="password" placeholder="Your password" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -103,7 +95,10 @@ const Login = () => {
           {isLoading ? <Loader /> : "Login"}{" "}
         </Button>
         <span className="self-container">
-          Don't have an account? <Link href="/signup" className="text-indigo-500">Sign up</Link>
+          Don't have an account?{" "}
+          <Link href="/signup" className="text-indigo-500">
+            Sign up
+          </Link>
         </span>
       </form>
     </Form>

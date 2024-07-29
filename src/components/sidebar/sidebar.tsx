@@ -1,31 +1,66 @@
-import { getFolders, getUserSubscriptionStatus } from '@/lib/supabase/queries'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
-import React from 'react'
+import {
+  getCollaboratingSessions,
+  getFolders,
+  getPrivateSessions,
+  getSharedSessions,
+  getUserSubscriptionStatus,
+} from "@/lib/supabase/queries";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import React from "react";
+import { twMerge } from "tailwind-merge";
+import SessionDropdown from "./session-dropdown";
 
 interface SidebarProps {
-    params: {sessionId: string}
-    className?: string 
-
+  params: { sessionId: string };
+  className?: string;
 }
 
-const Sidebar:React.FC<SidebarProps> = async ({params, className}) => {
-    const supabase = createServerComponentClient({cookies})
+const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
+  const supabase = createServerComponentClient({ cookies });
 
-    const {data:{user}} = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if(!user) return;
+  if (!user) return;
 
-    const {data:subscribtionData, error:subscribtionError} = await getUserSubscriptionStatus(user.id)
+  const { data: subscribtionData, error: subscribtionError } =
+    await getUserSubscriptionStatus(user.id);
 
-    const {data:sessionFolderData, error:foldersError} = await getFolders(params.sessionId)
+  const { data: sessionFolderData, error: foldersError } = await getFolders(
+    params.sessionId
+  );
 
-    if(subscribtionError || foldersError) redirect('/dashboard')
+  if (subscribtionError || foldersError) redirect("/dashboard");
+
+  const [privateSessions, collaboratingSessions, sharedSessions] =
+    await Promise.all([
+      getPrivateSessions(user.id),
+      getSharedSessions(user.id),
+      getCollaboratingSessions(user.id),
+    ]);
 
   return (
-    <div>Sidebar</div>
-  )
-}
+    <aside
+    className={twMerge(
+      'hidden sm:flex sm:flex-col w-[280px] shrink-0 p-4 md:gap-4 !justify-between',
+      className
+    )}
+    >
+      <div>
+        <SessionDropdown
+          privateSessions={privateSessions}
+          collaboratingSessions={collaboratingSessions}
+          sharedSessions={sharedSessions}
+          defaultValue={[...privateSessions,
+            ...sharedSessions,
+            ...collaboratingSessions].find(session => session.id === params.sessionId)}
+        />
+      </div>
+    </aside>
+  );
+};
 
-export default Sidebar
+export default Sidebar;

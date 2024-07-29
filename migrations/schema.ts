@@ -110,3 +110,10 @@ export const subscriptions = pgTable("subscriptions", {
 	trial_start: timestamp("trial_start", { withTimezone: true, mode: 'string' }).default(sql`now()`),
 	trial_end: timestamp("trial_end", { withTimezone: true, mode: 'string' }).default(sql`now()`),
 });
+
+export const collaborators = pgTable("collaborators", {
+	id: uuid("id").defaultRandom().primaryKey().notNull(),
+	session_id: uuid("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" } ),
+	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	user_id: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+});

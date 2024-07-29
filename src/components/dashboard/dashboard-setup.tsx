@@ -1,8 +1,8 @@
-'use client';
-import { AuthUser } from '@supabase/supabase-js';
-import React, { useState } from 'react';
-import { FieldValues, SubmitHandler, useForm } from 'react-hook-form';
-import { v4 } from 'uuid';
+"use client";
+import { AuthUser } from "@supabase/supabase-js";
+import React, { useState } from "react";
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
+import { v4 } from "uuid";
 
 import {
   Card,
@@ -10,19 +10,19 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../ui/card';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Subscription, session } from '@/lib/supabase/supabase.types';
-import { Button } from '../ui/button';
-import Loader from '../Loader';
-import { createSession } from '@/lib/supabase/queries';
-import { useToast } from '../ui/use-toast';
-import { useRouter } from 'next/navigation';
-import { useAppState } from '@/lib/providers/state-provider';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { CreateSessionFormSchema } from '@/lib/types';
-import { z } from 'zod';
+} from "../ui/card";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Subscription, session } from "@/lib/supabase/supabase.types";
+import { Button } from "../ui/button";
+import Loader from "../global/loader";
+import { createSession } from "@/lib/supabase/queries";
+import { useToast } from "../ui/use-toast";
+import { useRouter } from "next/navigation";
+import { useAppState } from "@/lib/providers/state-provider";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { CreateSessionFormSchema } from "@/lib/types";
+import { z } from "zod";
 
 interface DashboardSetupProps {
   user: AuthUser;
