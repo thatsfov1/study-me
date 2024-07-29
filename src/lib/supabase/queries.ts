@@ -3,7 +3,7 @@ import { Folder, Subscription, User, session } from "./supabase.types";
 import { folders, sessions, users } from "../../../migrations/schema";
 import db from "./db";
 import { validate } from "uuid";
-import { eq, and, notExists } from "drizzle-orm";
+import { eq, and, notExists,ilike } from "drizzle-orm";
 import { collaborators } from "./schema";
 
 export const createSession = async (session: session) => {
@@ -12,7 +12,7 @@ export const createSession = async (session: session) => {
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
-    return { data: null, error: "Error" };
+    return { data: null, error:error?.message };
   }
 };
 
@@ -124,3 +124,9 @@ export const addCollaborators = async (users: User[], sessionId: string) => {
     if(!userExists) await db.insert(collaborators).values({session_id:sessionId, user_id:user.id})
   });
 };
+
+export const getUsersFromSearch = async (email: string) => {
+  if(!email) return []
+  const accounts = await db.select().from(users).where(ilike(users.email, `${email}%`))
+  return accounts
+}

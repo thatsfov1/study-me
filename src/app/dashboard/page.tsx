@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TGoal } from "../types/goals";
-import SingleGoal from "../../components/dashboard/single-goal";
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import db from "@/lib/supabase/db";

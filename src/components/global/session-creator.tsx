@@ -4,7 +4,7 @@ import { session, User } from "@/lib/supabase/supabase.types";
 import React, { useState } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { Lock, Share,Plus } from "lucide-react";
+import { Lock, Share, Plus } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,17 +15,21 @@ import {
 } from "@/components/ui/select";
 import { Button } from "../ui/button";
 import { v4 } from "uuid";
-import { toast } from "../ui/use-toast";
+import { useToast } from "../ui/use-toast";
 import { addCollaborators, createSession } from "@/lib/supabase/queries";
 import { useRouter } from "next/navigation";
 import CollaboratorsSearch from "./collaborators-search";
+import { ScrollArea } from "../ui/scroll-area";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 const SessionCreator = () => {
   const { user } = useSupabaseUser();
-const router = useRouter()
+  const router = useRouter();
+  const {toast} = useToast()
   const [permissions, setPermissions] = useState("private");
   const [title, setTitle] = useState("");
   const [collaborators, setCollaborators] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false)
 
   const addCollaborator = (user: User) => {
     setCollaborators([...collaborators, user]);
@@ -37,30 +41,32 @@ const router = useRouter()
     );
   };
 
-  const createItem = async() => {
-    const uuid = v4()
-    if(user?.id){
-        const newSession: session = {
-            data: null,
-            created_at: new Date().toISOString(),
-            id: uuid,
-            in_trash: '',
-            title,
-            session_owner: user.id,
-          };
-          if (permissions === 'private') {
-            toast({ title: 'Success', description: 'Created the session' });
-            await createSession(newSession);
-            router.refresh();
-          }
-          if (permissions === 'shared') {
-            toast({ title: 'Success', description: 'Created the session' });
-            await createSession(newSession);
-            await addCollaborators(collaborators, uuid);
-            router.refresh();
-          }
+  const createItem = async () => {
+    setIsLoading(true)
+    const uuid = v4();
+    if (user?.id) {
+      const newSession: session = {
+        data: null,
+        created_at: new Date().toISOString(),
+        id: uuid,
+        in_trash: "",
+        title,
+        session_owner: user.id,
+      };
+      if (permissions === "private") {
+        toast({ title: "Success", description: "Created the session" });
+        await createSession(newSession);
+        router.refresh();
+      }
+      if (permissions === "shared") {
+        toast({ title: "Success", description: "Created the session" });
+        await createSession(newSession);
+        await addCollaborators(collaborators, uuid);
+        router.refresh();
+      }
     }
-  }
+    setIsLoading(false)
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -121,20 +127,59 @@ const router = useRouter()
           </SelectContent>
         </Select>
       </>
-      {permissions === "shared" && <div>
-        <CollaboratorsSearch existingCollaborators={collaborators} getCollaborator={(user) => {
-            addCollaborator(user)
-        }}>
-            <Button type='button' className="mt-4 text-sm">
-                <Plus/>
-                Add Collaborators
+      {permissions === "shared" && (
+        <div>
+          <CollaboratorsSearch
+            existingCollaborators={collaborators}
+            getCollaborator={(user) => {
+              addCollaborator(user);
+            }}
+          >
+            <Button type="button" className="mt-4 text-sm">
+              <Plus />
+              Add Collaborators
             </Button>
-        </CollaboratorsSearch>
-        </div>}
+          </CollaboratorsSearch>
+          <div className="mt-4">
+            <span className="text-sm text-muted-foreground">
+              Collaborators {collaborators.length || ""}
+            </span>
+            <ScrollArea className="h-[120px] overflow-y-scroll w-full rounded-md border border-muted-foreground/20">
+              {collaborators.length
+                ? collaborators.map((c) => (
+                    <div
+                      className="p-4 flex justify-between items-center"
+                      key={c.id}
+                    >
+                      <div className="flex gap-4 items-center">
+                        <Avatar>
+                          <AvatarImage src=""></AvatarImage>
+                          <AvatarFallback>PJ</AvatarFallback>
+                        </Avatar>
+                        <div className="text-sm gap-2 text-muted-foreground overflow-hidden overflow-ellipsis sm:w-[300px] w-[140px]">
+                          {c.email}
+                        </div>
+                      </div>
+                      <Button onClick={() => removeCollaborator(c)}>
+                        Remove
+                      </Button>
+                    </div>
+                  ))
+                : (
+                    <div className="absolute right-0 left-0 top-0 bottom-0 flex justify-center items-center">
+                            <span className="text-muted-foreground text-sm">
+                                You have no collaborators
+                            </span>
+                    </div>
+                )}
+            </ScrollArea>
+          </div>
+        </div>
+      )}
       <Button
         type="button"
         disabled={
-          !title || (permissions === "shared" && collaborators.length === 0)
+          !title || (permissions === "shared" && collaborators.length === 0) || isLoading
         }
         onClick={createItem}
       >

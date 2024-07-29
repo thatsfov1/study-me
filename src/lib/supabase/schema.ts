@@ -9,7 +9,7 @@ export const sessions = pgTable("sessions", {
     mode: "string",
   }),
   session_owner: uuid("session_owner").notNull(),
-  title: uuid("title").notNull(),
+  title: text("title").notNull(),
   data: text("data"),
   in_trash: text("in_trash"),
 });

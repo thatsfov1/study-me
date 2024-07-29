@@ -19,7 +19,7 @@ export const sessions = pgTable("sessions", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }),
 	session_owner: uuid("session_owner").notNull(),
-	title: uuid("title").notNull(),
+	title: text("title").notNull(),
 	data: text("data"),
 	in_trash: text("in_trash"),
 });
@@ -38,7 +38,7 @@ export const files = pgTable("files", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }),
 	session_owner: uuid("session_owner").notNull(),
-	title: uuid("title").notNull(),
+	title: text("title").notNull(),
 	data: text("data"),
 	in_trash: text("in_trash"),
 	session_id: uuid("session_id").references(() => sessions.id, { onDelete: "cascade" } ),

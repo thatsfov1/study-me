@@ -44,9 +44,10 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   } = useForm<z.infer<typeof CreateSessionFormSchema>>({
     mode: "onChange",
     defaultValues: {
-      sessionName: "",
+      sessionName: '',
     },
   });
+
   const supabase = createClientComponentClient();
 
   const onSubmit: SubmitHandler<
@@ -64,7 +65,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
         session_owner: user.id,
       };
       const { data, error: createError } = await createSession(newSession);
-      if (false) {
+      if (createError) {
         throw new Error();
       }
       dispatch({

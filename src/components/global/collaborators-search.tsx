@@ -15,6 +15,7 @@ import { Search } from "lucide-react";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
+import { getUsersFromSearch } from "@/lib/supabase/queries";
 
 interface CollaboratorsSearchProps {
   existingCollaborators: User[] | [];
@@ -27,7 +28,7 @@ const CollaboratorsSearch: React.FC<CollaboratorsSearchProps> = ({
   existingCollaborators,
   getCollaborator,
 }) => {
-  const [searchResults, setsearchResults] = useState<User[] | []>([]);
+  const [searchResults, setSearchResults] = useState<User[] | []>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
   const user = useSupabaseUser();
 
@@ -37,9 +38,17 @@ const CollaboratorsSearch: React.FC<CollaboratorsSearchProps> = ({
     };
   }, []);
 
-  const onChangeHandler = () => {};
+  const onChangeHandler = (e:React.ChangeEvent<HTMLInputElement>) => {
+        if(timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(async() =>{
+            const res = await getUsersFromSearch(e.target.value);
+            setSearchResults(res);
+        },450)
+  };
 
-  const addCollaborator = () => {};
+  const addCollaborator = (user:User) => {
+    getCollaborator(user)
+  };
 
   return (
     <Sheet>

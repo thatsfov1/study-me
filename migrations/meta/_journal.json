@@ -29,6 +29,13 @@
       "when": 1722240222286,
       "tag": "0003_magical_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1722270982970,
+      "tag": "0004_bitter_norman_osborn",
+      "breakpoints": true
     }
   ]
 }
