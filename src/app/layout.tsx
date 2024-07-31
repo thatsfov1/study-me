@@ -19,11 +19,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  console.log(db);
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider attribute="class" enableSystem>
+        <ThemeProvider attribute="class" enableSystem defaultTheme="system">
           <AppStateProvider>
             <SupabaseUserProvider>{children}</SupabaseUserProvider>
             <Toaster />

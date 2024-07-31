@@ -1,0 +1,1 @@
+export const MAX_FOLDERS_PER_FREE = 100

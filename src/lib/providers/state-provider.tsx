@@ -87,37 +87,37 @@ const appReducer = (
         ...state,
         sessions: action.payload.sessions,
       };
-    // case 'SET_FOLDERS':
-    //   return {
-    //     ...state,
-    //     sessions: state.sessions.map((session) => {
-    //       if (session.id === action.payload.session_id) {
-    //         return {
-    //           ...session,
-    //           folders: action.payload.folders.sort(
-    //             (a, b) =>
-    //               new Date(a.created_at).getTime() -
-    //               new Date(b.created_at).getTime()
-    //           ),
-    //         };
-    //       }
-    //       return session;
-    //     }),
-    //   };
-    // case 'ADD_FOLDER':
-    //   return {
-    //     ...state,
-    //     sessions: state.sessions.map((session) => {
-    //       return {
-    //         ...session,
-    //         folders: [...session.folders, action.payload.folder].sort(
-    //           (a, b) =>
-    //             new Date(a.created_at).getTime() -
-    //             new Date(b.created_at).getTime()
-    //         ),
-    //       };
-    //     }),
-    //   };
+    case 'SET_FOLDERS':
+      return {
+        ...state,
+        sessions: state.sessions.map((session) => {
+          if (session.id === action.payload.session_id) {
+            return {
+              ...session,
+              folders: action.payload.folders.sort(
+                (a, b) =>
+                  new Date(a.created_at).getTime() -
+                  new Date(b.created_at).getTime()
+              ),
+            };
+          }
+          return session;
+        }),
+      };
+    case 'ADD_FOLDER':
+      return {
+        ...state,
+        sessions: state.sessions.map((session) => {
+          return {
+            ...session,
+            folders: [...session.folders, action.payload.folder].sort(
+              (a, b) =>
+                new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime()
+            ),
+          };
+        }),
+      };
     case 'UPDATE_FOLDER':
       return {
         ...state,
@@ -160,7 +160,7 @@ const AppStateContext = createContext<
   | {
       state: AppState;
       dispatch: Dispatch<Action>;
-      session_id: string | undefined;
+      sessionId: string | undefined;
       folderId: string | undefined;
     }
   | undefined
@@ -174,7 +174,7 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const pathname = usePathname();
 
-  const session_id = useMemo(() => {
+  const sessionId = useMemo(() => {
     const urlSegments = pathname?.split('/').filter(Boolean);
     if (urlSegments)
       if (urlSegments.length > 1) {
@@ -197,7 +197,7 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
 
   return (
     <AppStateContext.Provider
-      value={{ state, dispatch, session_id, folderId }}
+      value={{ state, dispatch, sessionId, folderId }}
     >
       {children}
     </AppStateContext.Provider>

@@ -11,6 +11,10 @@ import { redirect } from "next/navigation";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import SessionDropdown from "./session-dropdown";
+import PlanUsage from "./plan-usage";
+import NativeNavigation from "./native-navigation";
+import { ScrollArea } from "../ui/scroll-area";
+import FoldersDropdownList from "./folders-dropdown-list";
 
 interface SidebarProps {
   params: { sessionId: string };
@@ -44,20 +48,44 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
 
   return (
     <aside
-    className={twMerge(
-      'hidden sm:flex sm:flex-col w-[280px] shrink-0 p-4 md:gap-4 !justify-between',
-      className
-    )}
+      className={twMerge(
+        "hidden sm:flex sm:flex-col w-[280px] shrink-0 p-4 md:gap-4 !justify-between",
+        className
+      )}
     >
       <div>
         <SessionDropdown
           privateSessions={privateSessions}
           collaboratingSessions={collaboratingSessions}
           sharedSessions={sharedSessions}
-          defaultValue={[...privateSessions,
+          defaultValue={[
+            ...privateSessions,
             ...sharedSessions,
-            ...collaboratingSessions].find(session => session.id === params.sessionId)}
+            ...collaboratingSessions,
+          ].find((session) => session.id === params.sessionId)}
         />
+        <PlanUsage
+          foldersLength={sessionFolderData?.length || 0}
+          subscription={subscribtionData}
+        />
+        <NativeNavigation mySessionId={params.sessionId} />
+        <ScrollArea className="overflow-scroll h-[450px] relative">
+          <div
+            className="pointer-events-none 
+          w-full 
+          absolute 
+          bottom-0 
+          h-20 
+          bg-gradient-to-t 
+          from-background 
+          to-transparent 
+          z-40"
+          />
+          <FoldersDropdownList
+            sessionFolders={sessionFolderData || []}
+            sessionId={params.sessionId}
+          />
+        </ScrollArea>
       </div>
     </aside>
   );

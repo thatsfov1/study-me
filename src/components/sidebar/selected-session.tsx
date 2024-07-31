@@ -23,7 +23,7 @@ const SelectedSession: React.FC<SelectedSessionProps> = ({
       className="flex rounded-md hover:bg-muted transition-all flex-row p-2 gap-4 justify-center items-center cursor-pointer my-2"
     >
       <div className="flex flex-col">
-        <p className="text-lg w-[170px] overflow-hidden overflow-ellipsis whitespace-nowrap">{session.title}</p>
+        <p className="text-lg w-[170px] pl-2 overflow-hidden overflow-ellipsis whitespace-nowrap">{session.title}</p>
       </div>
     </Link>
   );
