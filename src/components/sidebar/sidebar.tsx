@@ -15,6 +15,7 @@ import PlanUsage from "./plan-usage";
 import NativeNavigation from "./native-navigation";
 import { ScrollArea } from "../ui/scroll-area";
 import FoldersDropdownList from "./folders-dropdown-list";
+import UserCard from "./user-card";
 
 interface SidebarProps {
   params: { sessionId: string };
@@ -30,14 +31,14 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
 
   if (!user) return;
 
-  const { data: subscribtionData, error: subscribtionError } =
+  const { data: subscriptionData, error: subscriptionError } =
     await getUserSubscriptionStatus(user.id);
 
   const { data: sessionFolderData, error: foldersError } = await getFolders(
     params.sessionId
   );
 
-  if (subscribtionError || foldersError) redirect("/dashboard");
+  if (subscriptionError || foldersError) redirect("/dashboard");
 
   const [privateSessions, collaboratingSessions, sharedSessions] =
     await Promise.all([
@@ -66,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
         />
         <PlanUsage
           foldersLength={sessionFolderData?.length || 0}
-          subscription={subscribtionData}
+          subscription={subscriptionData}
         />
         <NativeNavigation mySessionId={params.sessionId} />
         <ScrollArea className="overflow-scroll h-[450px] relative">
@@ -87,6 +88,7 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
           />
         </ScrollArea>
       </div>
+      <UserCard subscription={subscriptionData} />
     </aside>
   );
 };

@@ -35,7 +35,7 @@ export const folders = pgTable("folders", {
   title: text("title").notNull(),
   data: text("data"),
   in_trash: text("in_trash"),
-  session_id: uuid("session_id").references(() => sessions.id, {
+  session_id: uuid("session_id").notNull().references(() => sessions.id, {
     onDelete: "cascade",
   }),
 });

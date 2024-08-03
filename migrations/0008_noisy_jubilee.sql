@@ -1,0 +1,1 @@
+ALTER TABLE "folders" ALTER COLUMN "session_id" SET NOT NULL;

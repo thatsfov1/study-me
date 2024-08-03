@@ -1,3 +1,6 @@
+import { Socket, Server as NetServer } from 'net';
+import {Server as SocketIOServer} from 'socket.io'
+import { NextApiResponse } from 'next';
 import { z } from 'zod'
 
 export const FormSchema = z.object({
@@ -12,3 +15,11 @@ export const CreateSessionFormSchema = z.object({
       .describe('Session Name')
       .min(1, 'Session name must be min of 1 character'),
   });
+
+export type NextApiResponseServerIo = NextApiResponse & {
+    socket: Socket & {
+        server: NetServer & {
+            io:SocketIOServer
+        }
+    }
+}

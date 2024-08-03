@@ -8,6 +8,8 @@ import clsx from "clsx";
 import { updateFolder } from "@/lib/supabase/queries";
 import TooltipComponent from "../global/tooltip-component";
 import { PlusIcon, Trash } from "lucide-react";
+import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
+import { useToast } from "../ui/use-toast";
 
 interface DropdownProps {
   title: string;
@@ -25,6 +27,8 @@ const Dropdown: React.FC<DropdownProps> = ({
 }) => {
   const supabase = createClientComponentClient();
   const { state, dispatch, sessionId, folderId } = useAppState();
+  const { user } = useSupabaseUser();
+  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const router = useRouter();
 
@@ -39,6 +43,35 @@ const Dropdown: React.FC<DropdownProps> = ({
     await updateFolder({ title }, fId[0]);
   };
 
+  const moveToTrash = async () => {
+    if (!user || !sessionId) return;
+    const pathId = id.split("folder");
+    dispatch({
+      type: "UPDATE_FOLDER",
+      payload: {
+        folder: { in_trash: `Deleted by ${user?.email}` },
+        folderId: pathId[0],
+        session_id: sessionId,
+      },
+    });
+    const { data, error } = await updateFolder(
+      { in_trash: `Deleted by ${user?.email}` },
+      pathId[0]
+    );
+    if (error) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: `Failed to move folder to trash `,
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: `Moved folder to trash `,
+      });
+    }
+  };
+
   const navigatePage = (accordionId: string) => {
     router.push(`/dashboard/${sessionId}/${accordionId}`);
   };
@@ -51,11 +84,18 @@ const Dropdown: React.FC<DropdownProps> = ({
     return stateTitle;
   }, [state, sessionId]);
 
-  const folderTitleChange = (e:any) => {
+  const folderTitleChange = (e: any) => {
     if (!sessionId) return;
-    const fId = id.split('folder')
-    dispatch({type: 'UPDATE_FOLDER', payload: {folder:{title:e.target.value}, folderId:fId[0], session_id:sessionId}});
-  }
+    const fId = id.split("folder");
+    dispatch({
+      type: "UPDATE_FOLDER",
+      payload: {
+        folder: { title: e.target.value },
+        folderId: fId[0],
+        session_id: sessionId,
+      },
+    });
+  };
 
   return (
     <AccordionItem
@@ -83,9 +123,9 @@ const Dropdown: React.FC<DropdownProps> = ({
             />
           </div>
           <div className="h-full hidden rounded-sm absolute right-0 items-center justify-center group-hover/folder:block">
-          <TooltipComponent message="Delete Folder">
+            <TooltipComponent message="Delete Folder">
               <Trash
-                //onClick={moveToTrash}
+                onClick={moveToTrash}
                 size={15}
                 className="hover:text-black transition-colors"
               />

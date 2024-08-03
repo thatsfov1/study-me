@@ -43,6 +43,13 @@ const SessionDropdown: React.FC<SessionDropdownProps> = ({
     setIsOpen(false);
   };
 
+  useEffect(() => {
+    const findSelectedWorkspace = state.sessions.find(
+      (session) => session.id === defaultValue?.id
+    );
+    if (findSelectedWorkspace) setSelectedOption(findSelectedWorkspace);
+  }, [state, defaultValue]);
+
   return (
     <div
       className=" relative inline-block

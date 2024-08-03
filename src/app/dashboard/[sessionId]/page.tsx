@@ -1,8 +1,18 @@
+export const dynamic = 'force-dynamic';
+import QuillEditor from '@/components/quill-editor/quill-editor'
+import { getSessionDetails } from '@/lib/supabase/queries'
+import { redirect } from 'next/navigation'
 import React from 'react'
 
-const SessionPage = () => {
+const SessionPage = async ({params}:{params: {sessionId:string}}) => {
+
+  const {data, error} = await getSessionDetails(params.sessionId)
+  if(error || !data?.length) redirect('/dashboard')
+
   return (
-    <div>Session</div>
+    <div className='relative'>
+      <QuillEditor dirType="session" fileId={params.sessionId} dirDetails={data[0] || {}} />
+    </div>
   )
 }
 
