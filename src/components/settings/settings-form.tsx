@@ -6,15 +6,26 @@ import { session, User } from "@/lib/supabase/supabase.types";
 import { useRouter } from "next/navigation";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Briefcase, Share, Lock, Plus } from "lucide-react";
+import {
+  Briefcase,
+  Share,
+  Lock,
+  Plus,
+  User as UserIcon,
+  LogOut,
+  CreditCard,
+  ExternalLink,
+} from "lucide-react";
 import { Separator } from "@radix-ui/react-select";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import {
   addCollaborators,
   deleteSession,
+  findUser,
   getCollaborators,
   removeCollaborators,
+  updateProfile,
   updateSession,
 } from "@/lib/supabase/queries";
 import {
@@ -39,16 +50,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import { v4 } from "uuid";
+import LogoutButton from "../global/logout-button";
+import Link from "next/link";
+import { useSubscriptionModal } from "@/lib/providers/subscription-modal-provider";
 
 const SettingsForm = () => {
   const { toast } = useToast();
-  const { user } = useSupabaseUser();
   const router = useRouter();
   const supabase = createClientComponentClient();
+  const { subscription } = useSupabaseUser();
   const { state, sessionId, dispatch } = useAppState();
+  const {open, setOpen} = useSubscriptionModal()
   const [permissions, setPermissions] = useState("private");
   const [collaborators, setCollaborators] = useState<User[] | []>([]);
   const [openAlertMessage, setOpenAlertMessage] = useState(false);
+  const [user, setUser] = useState<User | undefined>(undefined);
+  const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
   const [sessionDetails, setSessionDetails] = useState<session>();
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
@@ -86,23 +104,69 @@ const SettingsForm = () => {
   };
 
   const onClickAlertConfirm = async () => {
-    if(!sessionId) return
+    if (!sessionId) return;
 
-    if(collaborators.length > 0) {
+    if (collaborators.length > 0) {
       await removeCollaborators(collaborators, sessionId);
     }
 
-    setPermissions('private');
-    setOpenAlertMessage(false)
-  }
+    setPermissions("private");
+    setOpenAlertMessage(false);
+  };
 
-  const onPermissionsChange = (val:string) => {
-    if(val==='private'){
+  const onPermissionsChange = (val: string) => {
+    if (val === "private") {
       setOpenAlertMessage(true);
-    }else{
+    } else {
       setPermissions(val);
     }
-  }
+  };
+
+  const onChangeProfilePicture = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!user) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingProfilePic(true);
+    const uuid = v4();
+    const { data, error } = await supabase.storage
+      .from("avatars")
+      .upload(`avatar.${user.id}.${uuid}`, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (!error) {
+      await updateProfile({ avatar_url: data.path }, user.id);
+      setUploadingProfilePic(false);
+      setUser({
+        ...user,
+        avatar_url: supabase.storage.from("avatars").getPublicUrl(data.path)
+          ?.data.publicUrl,
+      });
+      router.refresh();
+    }
+  };
+
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const userInfo = await findUser(user.id);
+        const avatarUrl = userInfo?.avatar_url
+          ? supabase.storage.from("avatars").getPublicUrl(userInfo.avatar_url)
+              ?.data.publicUrl
+          : null;
+        if (userInfo) setUser({ ...userInfo, avatarUrl });
+      }
+    };
+    getUser();
+  }, [supabase]);
 
   useEffect(() => {
     const showingSession = state.sessions.find((s) => s.id === sessionId);
@@ -256,6 +320,84 @@ const SettingsForm = () => {
           Delete Session
         </Button>
       </Alert>
+      <p className="flex items-center gap-2 mt-6">
+        <UserIcon size={20} /> Profile
+      </p>
+      <Separator />
+      <div className="flex items-center">
+        <Avatar>
+          <AvatarImage src={user?.avatar_url || ""} />
+          <AvatarFallback>
+            <UserIcon />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col mt-6">
+          <small className="text-muted-foreground cursor-not-allowed">
+            {user ? user.email : ""}
+          </small>
+          <Label
+            htmlFor="profilePicture"
+            className="text-sm text-muted-foreground"
+          ></Label>
+
+          <Input
+            name="profilePicture"
+            type="file"
+            accept="image/*"
+            placeholder="Profile picture"
+            onChange={onChangeProfilePicture}
+            disabled={uploadingProfilePic}
+          />
+        </div>
+      </div>
+      <LogoutButton>
+        <div className="flex items-center">
+          <LogOut />
+        </div>
+      </LogoutButton>
+      <p className="flex items-center gap-2 mt-6">
+        <CreditCard size={20} /> Billing & Plan
+      </p>
+      <Separator />
+      <p className="text-muted-foreground">
+        You are currently on a{" "}
+        {subscription?.status === "active" ? "Pro" : "Free"} Plan
+      </p>
+
+      <Link
+        href="/"
+        target="_blank"
+        className="text-muted-foreground
+      flex flex-row items-center gap-2"
+      >
+        View plans <ExternalLink size={16} />
+      </Link>
+      {subscription?.status === "active" ? (
+        <div>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            //disabled={loadingPortal}
+            className="text-sm"
+            //onClick={redirectToCustomerPortal}
+          >
+            Manage subscription
+          </Button>
+        </div>
+      ) : (
+        <div>
+          <Button
+            type="button"
+            size="sm"
+            variant={"secondary"}
+            className="text-sm"
+            onClick={() => setOpen(true)}
+          >
+            Start Plan
+          </Button>
+        </div>
+      )}
       <AlertDialog open={openAlertMessage}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -266,7 +408,7 @@ const SettingsForm = () => {
             </AlertDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={()=> setOpenAlertMessage(false)}>
+            <AlertDialogCancel onClick={() => setOpenAlertMessage(false)}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction onClick={onClickAlertConfirm}>

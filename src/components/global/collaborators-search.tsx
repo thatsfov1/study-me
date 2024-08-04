@@ -91,7 +91,7 @@ const CollaboratorsSearch: React.FC<CollaboratorsSearchProps> = ({
                         {user.email}
                     </div>
                 </div>
-                <Button variant='secondary'>Add</Button>
+                <Button variant='secondary' onClick={() => addCollaborator(user)}>Add</Button>
               </div>
             ))}
         </ScrollArea>

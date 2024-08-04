@@ -241,6 +241,15 @@ export const updateSession = async (
   }
 };
 
+export const updateProfile = async (profile: Partial<User>, userId: string) => {
+  if (!userId) return;
+  const response = await db
+    .update(users)
+    .set(profile)
+    .where(eq(users.id, userId));
+  return response;
+};
+
 export const deleteSession = async (sessionId: string) => {
   if (!sessionId) return;
 
@@ -256,6 +265,14 @@ export const getUsersFromSearch = async (email: string) => {
   return accounts;
 };
 
+export const findUser = async (userId: string) => {
+  const response = await db.query.users.findFirst({
+    where: (u, { eq }) => eq(u.id, userId),
+  });
+
+  return response;
+};
+
 export const getCollaborators = async (sessionId: string) => {
   const response = await db
     .select()
@@ -269,10 +286,10 @@ export const getCollaborators = async (sessionId: string) => {
       const exists = await db.query.users.findFirst({
         where: (u, { eq }) => eq(u.id, user.user_id),
       });
-      return exists
+      return exists;
     }
   );
 
-  const resolvedUsers = await Promise.all(userInformation)
-  return resolvedUsers.filter(Boolean )as User[]
+  const resolvedUsers = await Promise.all(userInformation);
+  return resolvedUsers.filter(Boolean) as User[];
 };
