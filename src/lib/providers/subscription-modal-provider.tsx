@@ -1,3 +1,4 @@
+'use client'
 import SubscriptionModal from "@/components/global/subscription-modal"
 import { SetStateAction,Dispatch, createContext,useContext, useState } from "react"
 

@@ -1,14 +1,14 @@
 "use server";
-import { Folder, Subscription, User, session } from "./supabase.types";
-import { folders, sessions, users } from "../../../migrations/schema";
+import { Session, Subscription, User, environment } from "./supabase.types";
+import { sessions, environments, users } from "../../../migrations/schema";
 import db from "./db";
 import { validate } from "uuid";
 import { eq, and, notExists, ilike } from "drizzle-orm";
 import { collaborators } from "./schema";
 
-export const createSession = async (session: session) => {
+export const createEnvironment = async (environment: environment) => {
   try {
-    const response = await db.insert(sessions).values(session);
+    const response = await db.insert(environments).values(environment);
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
@@ -29,8 +29,8 @@ export const getUserSubscriptionStatus = async (userId: string) => {
   }
 };
 
-export const getFolders = async (sessionId: string) => {
-  const isValid = validate(sessionId);
+export const getSessions = async (environmentId: string) => {
+  const isValid = validate(environmentId);
 
   if (!isValid) {
     return {
@@ -40,14 +40,37 @@ export const getFolders = async (sessionId: string) => {
   }
 
   try {
-    const results: Folder[] | [] = await db
+    const results: Session[] | [] = await db
       .select()
-      .from(folders)
-      .orderBy(folders.created_at)
-      .where(eq(folders.session_id, sessionId));
+      .from(sessions)
+      .orderBy(sessions.created_at)
+      .where(eq(sessions.environment_id, environmentId));
     return { data: results, error: null };
   } catch (error) {
     return { data: null, error: `Error ${error}` };
+  }
+};
+
+export const getEnvironmentDetails = async (environmentId: string) => {
+  const isValid = validate(environmentId);
+
+  if (!isValid) {
+    return {
+      data: null,
+      error: "Error",
+    };
+  }
+
+  try {
+    const details = (await db
+      .select()
+      .from(environments)
+      .where(eq(environments.id, environmentId))
+      .limit(1)) as environment[];
+    return { data: details, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: [], error: "Error" };
   }
 };
 
@@ -62,34 +85,11 @@ export const getSessionDetails = async (sessionId: string) => {
   }
 
   try {
-    const details = (await db
+    const response = (await db
       .select()
       .from(sessions)
       .where(eq(sessions.id, sessionId))
-      .limit(1)) as session[];
-    return { data: details, error: null };
-  } catch (error) {
-    console.log(error);
-    return { data: [], error: "Error" };
-  }
-};
-
-export const getFolderDetails = async (folderId: string) => {
-  const isValid = validate(folderId);
-
-  if (!isValid) {
-    return {
-      data: null,
-      error: "Error",
-    };
-  }
-
-  try {
-    const response = (await db
-      .select()
-      .from(folders)
-      .where(eq(folders.id, folderId))
-      .limit(1)) as Folder[];
+      .limit(1)) as Session[];
 
     return { data: response, error: null };
   } catch (error) {
@@ -97,8 +97,8 @@ export const getFolderDetails = async (folderId: string) => {
   }
 };
 
-export const deleteFolder = async (folderId: string) => {
-  const isValid = validate(folderId);
+export const deleteSession = async (sessionId: string) => {
+  const isValid = validate(sessionId);
 
   if (!isValid) {
     return {
@@ -107,120 +107,107 @@ export const deleteFolder = async (folderId: string) => {
     };
   }
 
-  await db.delete(folders).where(eq(folders.id, folderId));
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
 };
 
-export const getPrivateSessions = async (userId: string) => {
+export const getPrivateEnvironments = async (userId: string) => {
   if (!userId) return [];
 
-  const privateSessions = (await db
+  const privateEnvironments = (await db
     .select({
-      id: sessions.id,
-      created_at: sessions.created_at,
-      session_owner: sessions.session_owner,
-      title: sessions.title,
-      data: sessions.data,
-      in_trash: sessions.in_trash,
+      id: environments.id,
+      created_at: environments.created_at,
+      environment_owner: environments.environment_owner,
+      title: environments.title,
+      data: environments.data,
+      in_trash: environments.in_trash,
     })
-    .from(sessions)
+    .from(environments)
     .where(
       and(
         notExists(
           db
             .select()
             .from(collaborators)
-            .where(eq(collaborators.session_id, sessions.id))
+            .where(eq(collaborators.environment_id, environments.id))
         ),
-        eq(sessions.session_owner, userId)
+        eq(environments.environment_owner, userId)
       )
-    )) as session[];
-  return privateSessions;
+    )) as environment[];
+  return privateEnvironments;
 };
 
-export const getCollaboratingSessions = async (userId: string) => {
+export const getCollaboratingEnvironments = async (userId: string) => {
   if (!userId) return [];
 
-  const collaboratedSessions = (await db
+  const collaboratedEnvironments = (await db
     .select({
-      id: sessions.id,
-      created_at: sessions.created_at,
-      session_owner: sessions.session_owner,
-      title: sessions.title,
-      data: sessions.data,
-      in_trash: sessions.in_trash,
+      id: environments.id,
+      created_at: environments.created_at,
+      environment_owner: environments.environment_owner,
+      title: environments.title,
+      data: environments.data,
+      in_trash: environments.in_trash,
     })
     .from(users)
     .innerJoin(collaborators, eq(users.id, collaborators.user_id))
-    .innerJoin(sessions, eq(collaborators.session_id, sessions.id))
-    .where(eq(users.id, userId))) as session[];
-  return collaboratedSessions;
+    .innerJoin(environments, eq(collaborators.environment_id, environments.id))
+    .where(eq(users.id, userId))) as environment[];
+  return collaboratedEnvironments;
 };
 
-export const getSharedSessions = async (userId: string) => {
+export const getSharedEnvironments = async (userId: string) => {
   if (!userId) return [];
   const sharedWorkspaces = (await db
     .selectDistinct({
-      id: sessions.id,
-      created_at: sessions.created_at,
-      session_owner: sessions.session_owner,
-      title: sessions.title,
-      data: sessions.data,
-      in_trash: sessions.in_trash,
+      id: environments.id,
+      created_at: environments.created_at,
+      environment_owner: environments.environment_owner,
+      title: environments.title,
+      data: environments.data,
+      in_trash: environments.in_trash,
     })
-    .from(sessions)
-    .orderBy(sessions.created_at)
-    .innerJoin(collaborators, eq(sessions.id, collaborators.session_id))
-    .where(eq(sessions.session_owner, userId))) as session[];
+    .from(environments)
+    .orderBy(environments.created_at)
+    .innerJoin(collaborators, eq(environments.id, collaborators.environment_id))
+    .where(eq(environments.environment_owner, userId))) as environment[];
   return sharedWorkspaces;
 };
 
-export const addCollaborators = async (users: User[], sessionId: string) => {
+export const addCollaborators = async (users: User[], environmentId: string) => {
   const response = users.forEach(async (user: User) => {
     const userExists = await db.query.collaborators.findFirst({
       where: (u, { eq }) =>
-        and(eq(u.user_id, user.id), eq(u.session_id, sessionId)),
+        and(eq(u.user_id, user.id), eq(u.environment_id, environmentId)),
     });
     if (!userExists)
       await db
         .insert(collaborators)
-        .values({ session_id: sessionId, user_id: user.id });
+        .values({ environment_id: environmentId, user_id: user.id });
   });
 };
 
-export const removeCollaborators = async (users: User[], sessionId: string) => {
+export const removeCollaborators = async (users: User[], environmentId: string) => {
   const response = users.forEach(async (user: User) => {
     const userExists = await db.query.collaborators.findFirst({
       where: (u, { eq }) =>
-        and(eq(u.user_id, user.id), eq(u.session_id, sessionId)),
+        and(eq(u.user_id, user.id), eq(u.environment_id, environmentId)),
     });
     if (userExists)
       await db
         .delete(collaborators)
         .where(
           and(
-            eq(collaborators.session_id, sessionId),
+            eq(collaborators.environment_id, environmentId),
             eq(collaborators.user_id, user.id)
           )
         );
   });
 };
 
-export const createFolder = async (folder: Folder) => {
+export const createSession = async (session: Session) => {
   try {
-    const response = await db.insert(folders).values(folder);
-    return { data: null, error: null };
-  } catch (err) {
-    console.log(err);
-    return { data: null, error: "Error" };
-  }
-};
-
-export const updateFolder = async (
-  folder: Partial<Folder>,
-  folderId: string
-) => {
-  try {
-    await db.update(folders).set(folder).where(eq(folders.id, folderId));
+    const response = await db.insert(sessions).values(session);
     return { data: null, error: null };
   } catch (err) {
     console.log(err);
@@ -229,11 +216,24 @@ export const updateFolder = async (
 };
 
 export const updateSession = async (
-  session: Partial<session>,
+  session: Partial<Session>,
   sessionId: string
 ) => {
   try {
     await db.update(sessions).set(session).where(eq(sessions.id, sessionId));
+    return { data: null, error: null };
+  } catch (err) {
+    console.log(err);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const updateEnvironment = async (
+  environment: Partial<environment>,
+  environmentId: string
+) => {
+  try {
+    await db.update(environments).set(environment).where(eq(environments.id, environmentId));
     return { data: null, error: null };
   } catch (err) {
     console.log(err);
@@ -250,10 +250,10 @@ export const updateProfile = async (profile: Partial<User>, userId: string) => {
   return response;
 };
 
-export const deleteSession = async (sessionId: string) => {
-  if (!sessionId) return;
+export const deleteEnvironment = async (environmentId: string) => {
+  if (!environmentId) return;
 
-  await db.delete(sessions).where(eq(sessions.id, sessionId));
+  await db.delete(environments).where(eq(environments.id, environmentId));
 };
 
 export const getUsersFromSearch = async (email: string) => {
@@ -273,11 +273,11 @@ export const findUser = async (userId: string) => {
   return response;
 };
 
-export const getCollaborators = async (sessionId: string) => {
+export const getCollaborators = async (environmentId: string) => {
   const response = await db
     .select()
     .from(collaborators)
-    .where(eq(collaborators.session_id, sessionId));
+    .where(eq(collaborators.environment_id, environmentId));
 
   if (!response.length) return [];
 

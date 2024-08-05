@@ -1,22 +1,22 @@
 "use client";
 import { useAppState } from "@/lib/providers/state-provider";
-import { session } from "@/lib/supabase/supabase.types";
+import { environment } from "@/lib/supabase/supabase.types";
 import React, { useEffect, useState } from "react";
-import SelectedSession from "./selected-session";
+import SelectedEnvironment from "./selected-environment";
 import CustomDialogTrigger from "../global/custom-dialog-trigger";
-import SessionCreator from "../global/session-creator";
+import EnvironmentCreator from "../global/environment-creator";
 
-interface SessionDropdownProps {
-  privateSessions: session[] | [];
-  sharedSessions: session[] | [];
-  collaboratingSessions: session[] | [];
-  defaultValue: session | undefined;
+interface EnvironmentDropdownProps {
+  privateEnvironments: environment[] | [];
+  sharedEnvironments: environment[] | [];
+  collaboratingEnvironments: environment[] | [];
+  defaultValue: environment | undefined;
 }
 
-const SessionDropdown: React.FC<SessionDropdownProps> = ({
-  privateSessions,
-  sharedSessions,
-  collaboratingSessions,
+const EnvironmentDropdown: React.FC<EnvironmentDropdownProps> = ({
+  privateEnvironments,
+  sharedEnvironments,
+  collaboratingEnvironments,
   defaultValue,
 }) => {
   const { dispatch, state } = useAppState();
@@ -24,44 +24,44 @@ const SessionDropdown: React.FC<SessionDropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (!state.sessions.length) {
+    if (!state.environments.length) {
       dispatch({
-        type: "SET_SESSIONS",
+        type: "SET_ENVIRONMENTS",
         payload: {
-          sessions: [
-            ...privateSessions,
-            ...sharedSessions,
-            ...collaboratingSessions,
-          ].map((session) => ({ ...session, folders: [] })),
+          environments: [
+            ...privateEnvironments,
+            ...sharedEnvironments,
+            ...collaboratingEnvironments,
+          ].map((environment) => ({ ...environment, sessions: [] })),
         },
       });
     }
-  }, [privateSessions, sharedSessions, collaboratingSessions]);
+  }, [privateEnvironments, sharedEnvironments, collaboratingEnvironments]);
 
-  const handleSelect = (option: session) => {
+  const handleSelect = (option: environment) => {
     setSelectedOption(option);
     setIsOpen(false);
   };
 
   useEffect(() => {
-    const findSelectedWorkspace = state.sessions.find(
-      (session) => session.id === defaultValue?.id
+    const findSelectedEnvironment = state.environments.find(
+      (environment) => environment.id === defaultValue?.id
     );
-    if (findSelectedWorkspace) setSelectedOption(findSelectedWorkspace);
+    if (findSelectedEnvironment) setSelectedOption(findSelectedEnvironment);
   }, [state, defaultValue]);
 
   return (
     <div
-      className=" relative inline-block
+      className="relative inline-block
       text-left
   "
     >
       <div>
         <span onClick={() => setIsOpen(!isOpen)}>
           {selectedOption ? (
-            <SelectedSession session={selectedOption} />
+            <SelectedEnvironment environment={selectedOption} />
           ) : (
-            'Select a session'
+            'Select a environment'
           )}
         </span>
       </div>
@@ -83,40 +83,40 @@ const SessionDropdown: React.FC<SessionDropdownProps> = ({
         >
           <div className="rounded-md flex flex-col">
             <div className="!p-2">
-              {!!privateSessions.length && (
+              {!!privateEnvironments.length && (
                 <>
                   <p className="text-muted-foreground">Private</p>
                   <hr></hr>
-                  {privateSessions.map((option) => (
-                    <SelectedSession
+                  {privateEnvironments.map((option) => (
+                    <SelectedEnvironment
                       key={option.id}
-                      session={option}
+                      environment={option}
                       onClick={handleSelect}
                     />
                   ))}
                 </>
               )}
-              {!!sharedSessions.length && (
+              {!!sharedEnvironments.length && (
                 <>
                   <p className="text-muted-foreground">Shared</p>
                   <hr />
-                  {sharedSessions.map((option) => (
-                    <SelectedSession
+                  {sharedEnvironments.map((option) => (
+                    <SelectedEnvironment
                       key={option.id}
-                      session={option}
+                      environment={option}
                       onClick={handleSelect}
                     />
                   ))}
                 </>
               )}
-              {!!collaboratingSessions.length && (
+              {!!collaboratingEnvironments.length && (
                 <>
                   <p className="text-muted-foreground">Collaborating</p>
                   <hr />
-                  {collaboratingSessions.map((option) => (
-                    <SelectedSession
+                  {collaboratingEnvironments.map((option) => (
+                    <SelectedEnvironment
                       key={option.id}
-                      session={option}
+                      environment={option}
                       onClick={handleSelect}
                     />
                   ))}
@@ -124,9 +124,9 @@ const SessionDropdown: React.FC<SessionDropdownProps> = ({
               )}
             </div>
             <CustomDialogTrigger
-              header="Create A Session"
-              content={<SessionCreator />}
-              description="You can change your session settings after creating the session too."
+              header="Create A Environment"
+              content={<EnvironmentCreator />}
+              description="You can change your environment settings after creating the environment too."
             >
               <div
                 className="flex 
@@ -149,7 +149,7 @@ const SessionDropdown: React.FC<SessionDropdownProps> = ({
                 >
                   +
                 </article>
-                Create workspace
+                Create environment
               </div>
             </CustomDialogTrigger>
           </div>
@@ -159,4 +159,4 @@ const SessionDropdown: React.FC<SessionDropdownProps> = ({
   );
 };
 
-export default SessionDropdown;
+export default EnvironmentDropdown;

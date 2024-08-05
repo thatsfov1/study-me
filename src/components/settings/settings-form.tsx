@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useToast } from "../ui/use-toast";
 import { useAppState } from "@/lib/providers/state-provider";
-import { session, User } from "@/lib/supabase/supabase.types";
+import { environment, User } from "@/lib/supabase/supabase.types";
 import { useRouter } from "next/navigation";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -21,12 +21,12 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import {
   addCollaborators,
-  deleteSession,
+  deleteEnvironment,
   findUser,
   getCollaborators,
   removeCollaborators,
   updateProfile,
-  updateSession,
+  updateEnvironment,
 } from "@/lib/supabase/queries";
 import {
   Select,
@@ -60,54 +60,54 @@ const SettingsForm = () => {
   const router = useRouter();
   const supabase = createClientComponentClient();
   const { subscription } = useSupabaseUser();
-  const { state, sessionId, dispatch } = useAppState();
+  const { state, environmentId, dispatch } = useAppState();
   const {open, setOpen} = useSubscriptionModal()
   const [permissions, setPermissions] = useState("private");
   const [collaborators, setCollaborators] = useState<User[] | []>([]);
   const [openAlertMessage, setOpenAlertMessage] = useState(false);
   const [user, setUser] = useState<User | undefined>(undefined);
   const [uploadingProfilePic, setUploadingProfilePic] = useState(false);
-  const [sessionDetails, setSessionDetails] = useState<session>();
+  const [environmentDetails, setEnvironmentDetails] = useState<environment>();
   const titleTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const addCollaborator = async (user: User) => {
-    if (!sessionId) return;
-    await addCollaborators([user], sessionId);
+    if (!environmentId) return;
+    await addCollaborators([user], environmentId);
 
     setCollaborators([...collaborators, user]);
     router.refresh();
   };
 
   const removeCollaborator = async (user: User) => {
-    if (!sessionId) return;
+    if (!environmentId) return;
     if (collaborators.length === 1) {
       setPermissions("private");
     }
-    await removeCollaborators([user], sessionId);
+    await removeCollaborators([user], environmentId);
     setCollaborators(
       collaborators.filter((collaborator) => collaborator.id !== user.id)
     );
     router.refresh();
   };
 
-  const sessionNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!sessionId || !e.target.value) return;
+  const environmentNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!environmentId || !e.target.value) return;
     dispatch({
-      type: "UPDATE_SESSION",
-      payload: { session_id: sessionId, session: { title: e.target.value } },
+      type: "UPDATE_ENVIRONMENT",
+      payload: { environment_id: environmentId, environment: { title: e.target.value } },
     });
 
     if (titleTimerRef.current) clearTimeout(titleTimerRef.current);
     titleTimerRef.current = setTimeout(async () => {
-      await updateSession({ title: e.target.value }, sessionId);
+      await updateEnvironment({ title: e.target.value }, environmentId);
     }, 500);
   };
 
   const onClickAlertConfirm = async () => {
-    if (!sessionId) return;
+    if (!environmentId) return;
 
     if (collaborators.length > 0) {
-      await removeCollaborators(collaborators, sessionId);
+      await removeCollaborators(collaborators, environmentId);
     }
 
     setPermissions("private");
@@ -162,47 +162,47 @@ const SettingsForm = () => {
           ? supabase.storage.from("avatars").getPublicUrl(userInfo.avatar_url)
               ?.data.publicUrl
           : null;
-        if (userInfo) setUser({ ...userInfo, avatarUrl });
+        if (userInfo) setUser({ ...userInfo, avatar_url:avatarUrl });
       }
     };
     getUser();
   }, [supabase]);
 
   useEffect(() => {
-    const showingSession = state.sessions.find((s) => s.id === sessionId);
+    const showingEnvironment = state.environments.find((s) => s.id === environmentId);
 
-    if (showingSession) setSessionDetails(showingSession);
+    if (showingEnvironment) setEnvironmentDetails(showingEnvironment);
   }, []);
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!environmentId) return;
 
     const fetchCollaborators = async () => {
-      const response = await getCollaborators(sessionId);
+      const response = await getCollaborators(environmentId);
       if (response.length) {
         setPermissions("shared");
         setCollaborators(response);
       }
     };
     fetchCollaborators();
-  }, [sessionId]);
+  }, [environmentId]);
 
   return (
     <div className="flex gap-4 flex-col">
       <p className="flex items-center gap-2 mt-6">
         <Briefcase />
-        Session
+        Environment
       </p>
       <Separator />
       <div className="flex flex-col gap-2">
-        <Label htmlFor="sessionName" className="text-sm text-muted-foreground">
+        <Label htmlFor="environmentName" className="text-sm text-muted-foreground">
           Name
         </Label>
         <Input
-          name="sessionName"
-          value={sessionDetails ? sessionDetails.title : ""}
-          placeholder="Session name"
-          onChange={sessionNameChange}
+          name="environmentName"
+          value={environmentDetails ? environmentDetails.title : ""}
+          placeholder="Environment name"
+          onChange={environmentNameChange}
         />
       </div>
 
@@ -225,7 +225,7 @@ const SettingsForm = () => {
                   <article className="text-left flex flex-col">
                     <span>Private</span>
                     <p className="text-muted-foreground">
-                      Your session is private to you. You can choose to share it
+                      Your environment is private to you. You can choose to share it
                       later.
                     </p>
                   </article>
@@ -297,8 +297,8 @@ const SettingsForm = () => {
       )}
       <Alert variant="destructive">
         <AlertDescription>
-          Warning! deleting you session will permanantly delete all data related
-          to this session.
+          Warning! deleting you environment will permanantly delete all data related
+          to this environment.
         </AlertDescription>
         <Button
           type="submit"
@@ -310,14 +310,14 @@ const SettingsForm = () => {
             border-2 
             border-destructive"
           onClick={async () => {
-            if (!sessionId) return;
-            await deleteSession(sessionId);
-            toast({ title: "Successfully deleted your session" });
-            dispatch({ type: "DELETE_SESSION", payload: sessionId });
+            if (!environmentId) return;
+            await deleteEnvironment(environmentId);
+            toast({ title: "Successfully deleted your environment" });
+            dispatch({ type: "DELETE_ENVIRONMENT", payload: environmentId });
             router.replace("/dashboard");
           }}
         >
-          Delete Session
+          Delete Environment
         </Button>
       </Alert>
       <p className="flex items-center gap-2 mt-6">
@@ -403,7 +403,7 @@ const SettingsForm = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDescription>
-              Changing a Shared workspace to a Private workspace will remove all
+              Changing a Shared environment to a Private environment will remove all
               collaborators permanantly.
             </AlertDescription>
           </AlertDialogHeader>

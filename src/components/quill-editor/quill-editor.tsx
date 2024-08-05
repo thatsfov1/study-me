@@ -1,6 +1,6 @@
 "use client";
 import { useAppState } from "@/lib/providers/state-provider";
-import { Folder, session } from "@/lib/supabase/supabase.types";
+import { Session, environment } from "@/lib/supabase/supabase.types";
 import React, {
   useState,
   useRef,
@@ -11,12 +11,12 @@ import React, {
 import "quill/dist/quill.snow.css";
 import { Button } from "../ui/button";
 import {
-  deleteFolder,
+  deleteSession,
   findUser,
-  getFolderDetails,
   getSessionDetails,
-  updateFolder,
+  getEnvironmentDetails,
   updateSession,
+  updateEnvironment,
 } from "@/lib/supabase/queries";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -32,29 +32,19 @@ import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 interface QuillEditorProps {
-  dirType: "session" | "folder";
-  dirDetails: Folder | session;
+  dirType: "environment" | "session";
+  dirDetails: Session | environment;
   fileId: string;
 }
 
 const TOOLBAR_OPTIONS = [
-  ["bold", "italic", "underline", "strike"], // toggled buttons
-  ["blockquote", "code-block"],
-
-  [{ header: 1 }, { header: 2 }], // custom button values
   [{ list: "ordered" }, { list: "bullet" }],
-  [{ script: "sub" }, { script: "super" }], // superscript/subscript
-  [{ indent: "-1" }, { indent: "+1" }], // outdent/indent
-  [{ direction: "rtl" }], // text direction
-
-  [{ size: ["small", false, "large", "huge"] }], // custom dropdown
-  [{ header: [1, 2, 3, 4, 5, 6, false] }],
-
-  [{ color: [] }, { background: [] }], // dropdown with defaults from theme
+  [{ indent: "-1" }, { indent: "+1" }],
+  [{ direction: "rtl" }],
+  [{ size: ["small", false, "large", "huge"] }], 
+  [{ color: [] }, { background: [] }], 
   [{ font: [] }],
   [{ align: [] }],
-
-  ["clean"], // remove formatting button
 ];
 
 const QuillEditor: React.FC<QuillEditorProps> = ({
@@ -62,7 +52,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   dirDetails,
   fileId,
 }) => {
-  const { state, sessionId, folderId, dispatch } = useAppState();
+  const { state, environmentId, sessionId, dispatch } = useAppState();
   const [quill, setQuill] = useState<any>(null);
   const supabase = createClientComponentClient();
   const { socket } = useSocket();
@@ -78,13 +68,13 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const details = useMemo(() => {
     let selectedDir;
 
-    if (dirType === "session") {
-      selectedDir = state.sessions.find((session) => session.id === sessionId);
+    if (dirType === "environment") {
+      selectedDir = state.environments.find((environment) => environment.id === environmentId);
     }
-    if (dirType === "folder") {
-      selectedDir = state.sessions
-        .find((session) => session.id === sessionId)
-        ?.folders.find((folder) => folder.id === fileId);
+    if (dirType === "session") {
+      selectedDir = state.environments
+        .find((environment) => environment.id === environmentId)
+        ?.sessions.find((session) => session.id === fileId);
     }
 
     if (selectedDir) return selectedDir;
@@ -94,36 +84,36 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       created_at: dirDetails.created_at,
       data: dirDetails.data,
       in_trash: dirDetails.in_trash,
-    } as session | Folder;
-  }, [state, sessionId, folderId]);
+    } as environment | Session;
+  }, [state, environmentId, sessionId]);
 
   const breadCrumps = useMemo(() => {
-    if (!pathname || !state.sessions || !sessionId) return;
+    if (!pathname || !state.environments || !environmentId) return;
 
     const segments = pathname
       .split("/")
       .filter((value) => value !== "dashboard" && value);
-    const sessionDetails = state.sessions.find(
-      (session) => session.id === sessionId
+    const environmentDetails = state.environments.find(
+      (environment) => environment.id === environmentId
     );
-    const sessionBreadCrump = sessionDetails ? sessionDetails.title : "";
+    const environmentBreadCrump = environmentDetails ? environmentDetails.title : "";
 
     if (segments.length === 1) {
-      return sessionBreadCrump;
+      return environmentBreadCrump;
     }
 
-    const folderSegment = segments[1];
+    const sessionSegment = segments[1];
 
-    const folderDetails = sessionDetails?.folders.find(
-      (folder) => folder.id === folderSegment
+    const sessionDetails = environmentDetails?.sessions.find(
+      (session) => session.id === sessionSegment
     );
 
-    const folderBreadCrump = folderDetails ? folderDetails.title : "";
+    const sessionBreadCrump = sessionDetails ? sessionDetails.title : "";
 
     if (segments.length === 2) {
-      return `${sessionBreadCrump} ${folderBreadCrump}`;
+      return `${environmentBreadCrump} ${sessionBreadCrump}`;
     }
-  }, [state, pathname, sessionId]);
+  }, [state, pathname, environmentId]);
 
   const wrapperRef = useCallback(async (wrapper: any) => {
     if (typeof window !== "undefined") {
@@ -142,50 +132,51 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             transformOnTextChange: true,
           },
         },
+        placeholder: 'Write your plan for the work...',
       });
       setQuill(q);
     }
   }, []);
 
   const restoreFileHandler = async () => {
-    if (!sessionId) return;
+    if (!environmentId) return;
     dispatch({
-      type: "UPDATE_FOLDER",
+      type: "UPDATE_SESSION",
       payload: {
-        folder: { in_trash: "" },
-        folderId: fileId,
-        session_id: sessionId,
+        session: { in_trash: "" },
+        sessionId: fileId,
+        environment_id: environmentId,
       },
     });
-    await updateFolder({ in_trash: "" }, fileId);
+    await updateSession({ in_trash: "" }, fileId);
   };
 
   const deleteFileHandler = async () => {
-    if (!sessionId) return;
+    if (!environmentId) return;
     dispatch({
-      type: "DELETE_FOLDER",
+      type: "DELETE_SESSION",
       payload: {
-        folderId: fileId,
-        session_id: sessionId,
+        sessionId: fileId,
+        environment_id: environmentId,
       },
     });
-    await deleteFolder(fileId);
-    router.replace(`/dashboard/${sessionId}`);
+    await deleteSession(fileId);
+    router.replace(`/dashboard/${environmentId}`);
   };
 
   useEffect(() => {
     if (!fileId) return;
     let selectedDir;
     const fetchInformation = async () => {
-      if (dirType === "folder") {
-        const { data: selectedDir, error } = await getFolderDetails(fileId);
+      if (dirType === "session") {
+        const { data: selectedDir, error } = await getSessionDetails(fileId);
 
         if (!error || !selectedDir) {
           return router.replace("/dashboard");
         }
 
         if (!selectedDir[0]) {
-          router.replace(`/dashboard/${sessionId}`);
+          router.replace(`/dashboard/${environmentId}`);
         }
 
         if (quill === null) return;
@@ -193,16 +184,16 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         quill.setContents(JSON.parse(selectedDir[0].data || ""));
 
         dispatch({
-          type: "UPDATE_FOLDER",
+          type: "UPDATE_SESSION",
           payload: {
-            folderId: fileId,
-            folder: { data: selectedDir[0].data },
-            session_id: selectedDir[0].session_id,
+            sessionId: fileId,
+            session: { data: selectedDir[0].data },
+            environment_id: selectedDir[0].environment_id,
           },
         });
       }
-      if (dirType === "session") {
-        const { data: selectedDir, error } = await getSessionDetails(fileId);
+      if (dirType === "environment") {
+        const { data: selectedDir, error } = await getEnvironmentDetails(fileId);
         if (error || !selectedDir) {
           return router.replace("/dashboard");
         }
@@ -210,16 +201,16 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         if (!selectedDir[0].data) return;
         quill.setContents(JSON.parse(selectedDir[0].data || ""));
         dispatch({
-          type: "UPDATE_SESSION",
+          type: "UPDATE_ENVIRONMENT",
           payload: {
-            session: { data: selectedDir[0].data },
-            session_id: fileId,
+            environment: { data: selectedDir[0].data },
+            environment_id: fileId,
           },
         });
       }
     };
     fetchInformation();
-  }, [fileId, sessionId, quill, dirType]);
+  }, [fileId, environmentId, quill, dirType]);
 
   useEffect(() => {
     if (quill === null || socket === null || !fileId || !localCursors.length)
@@ -248,7 +239,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   }, [socket, quill, fileId]);
 
   useEffect(() => {
-    if (quill === null || socket === null || !fileId || !user || !sessionId)
+    if (quill === null || socket === null || !fileId || !user || !environmentId)
       return;
 
     const selectionChangeHandler = (cursorId: string) => {
@@ -266,29 +257,29 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
       const quillLength = quill.getLength();
       saveTimerRef.current = setTimeout(async () => {
         if (contents && quillLength === 1 && fileId) {
+          if (dirType === "environment") {
+            dispatch({
+              type: "UPDATE_ENVIRONMENT",
+              payload: {
+                environment_id: environmentId,
+                environment: { data: JSON.stringify(contents) },
+              },
+            });
+
+            await updateEnvironment({ data: JSON.stringify(contents) }, fileId);
+          }
+
           if (dirType === "session") {
             dispatch({
               type: "UPDATE_SESSION",
               payload: {
-                session_id: sessionId,
                 session: { data: JSON.stringify(contents) },
+                environment_id: environmentId,
+                sessionId: fileId,
               },
             });
 
             await updateSession({ data: JSON.stringify(contents) }, fileId);
-          }
-
-          if (dirType === "folder") {
-            dispatch({
-              type: "UPDATE_FOLDER",
-              payload: {
-                folder: { data: JSON.stringify(contents) },
-                session_id: sessionId,
-                folderId: fileId,
-              },
-            });
-
-            await updateFolder({ data: JSON.stringify(contents) }, fileId);
           }
         }
         setSaving(false);
@@ -304,7 +295,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [quill, socket, fileId, user, details, folderId, sessionId]);
+  }, [quill, socket, fileId, user, details, sessionId, environmentId]);
 
   useEffect(() => {
     if (quill === null || socket === null) return;
@@ -319,8 +310,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     };
   }, [quill, socket, fileId]);
 
-  // FIX when collaborators are in the same session text doesn't update 
-  //immediately and col can't be in the same folder and when one creates a folder it's the bug to show it
+  // FIX when collaborators are in the same environment text doesn't update 
+  //immediately and col can't be in the same session and when one creates a session it's the bug to show it
   useEffect(() => {
     if (!fileId || quill === null) return;
     const room = supabase.channel(fileId);
@@ -424,7 +415,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
               </Button>
             </div>
             <span className="text-sm text-white">
-              Deleted by {details.in_trash}
+                {details.in_trash}
             </span>
           </article>
         )}
@@ -513,7 +504,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             {details.title}
           </span>
         </div>
-        <div id="container" className="max-w-[800px]" ref={wrapperRef}></div>
+        <div id="container" className="max-w-[900px]" ref={wrapperRef}></div>
       </div>
     </>
   );

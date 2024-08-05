@@ -1,6 +1,6 @@
 "use client";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
-import { session, User } from "@/lib/supabase/supabase.types";
+import { environment, User } from "@/lib/supabase/supabase.types";
 import React, { useState } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
@@ -16,13 +16,13 @@ import {
 import { Button } from "../ui/button";
 import { v4 } from "uuid";
 import { useToast } from "../ui/use-toast";
-import { addCollaborators, createSession } from "@/lib/supabase/queries";
+import { addCollaborators, createEnvironment } from "@/lib/supabase/queries";
 import { useRouter } from "next/navigation";
 import CollaboratorsSearch from "./collaborators-search";
 import { ScrollArea } from "../ui/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
-const SessionCreator = () => {
+const EnvironmentCreator = () => {
   const { user } = useSupabaseUser();
   const router = useRouter();
   const {toast} = useToast()
@@ -45,22 +45,22 @@ const SessionCreator = () => {
     setIsLoading(true)
     const uuid = v4();
     if (user?.id) {
-      const newSession: session = {
+      const newEnvironment: environment = {
         data: null,
         created_at: new Date().toISOString(),
         id: uuid,
         in_trash: "",
         title,
-        session_owner: user.id,
+        environment_owner: user.id,
       };
       if (permissions === "private") {
-        toast({ title: "Success", description: "Created the session" });
-        await createSession(newSession);
+        toast({ title: "Success", description: "Created the environment" });
+        await createEnvironment(newEnvironment);
         router.refresh();
       }
       if (permissions === "shared") {
-        toast({ title: "Success", description: "Created the session" });
-        await createSession(newSession);
+        toast({ title: "Success", description: "Created the environment" });
+        await createEnvironment(newEnvironment);
         await addCollaborators(collaborators, uuid);
         router.refresh();
       }
@@ -78,7 +78,7 @@ const SessionCreator = () => {
           <Input
             name="name"
             value={title}
-            placeholder="Session Name"
+            placeholder="Environment Name"
             onChange={(e) => {
               setTitle(e.target.value);
             }}
@@ -106,7 +106,7 @@ const SessionCreator = () => {
                   <article className="text-left flex flex-col">
                     <span>Private</span>
                     <p className="text-muted-foreground">
-                      Your session is private to you. You can choose to share it
+                      Your environment is private to you. You can choose to share it
                       later.
                     </p>
                   </article>
@@ -189,4 +189,4 @@ const SessionCreator = () => {
   );
 };
 
-export default SessionCreator;
+export default EnvironmentCreator;

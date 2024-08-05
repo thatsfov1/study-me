@@ -13,6 +13,7 @@ import {
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 
 const routes = [
   { title: "Features", path: "/features" },
@@ -50,6 +51,9 @@ const components: { title: string; href: string; description: string }[] = [
 
 const Header = () => {
   const [path, setPath] = useState("#features");
+
+  const {user} = useSupabaseUser()
+
   return (
     <nav className="flex justify-between items-center p-4">
       <div className="flex gap-5 items-center">
@@ -89,7 +93,9 @@ const Header = () => {
           </NavigationMenuList>
         </NavigationMenu>
       </div>
-      <div className="flex gap-3">
+      {user ? <div>
+          Profile settings
+      </div> : <div className="flex gap-3">
         <Link href="/login" className="py-1 px-4 bg-slate-200 rounded-lg">
           Login
         </Link>
@@ -99,7 +105,7 @@ const Header = () => {
         >
           Start for free
         </Link>
-      </div>
+      </div>}
     </nav>
   );
 };

@@ -1,8 +1,8 @@
 import {
-  getCollaboratingSessions,
-  getFolders,
-  getPrivateSessions,
-  getSharedSessions,
+  getCollaboratingEnvironments,
+  getSessions,
+  getPrivateEnvironments,
+  getSharedEnvironments,
   getUserSubscriptionStatus,
 } from "@/lib/supabase/queries";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
@@ -10,15 +10,15 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import React from "react";
 import { twMerge } from "tailwind-merge";
-import SessionDropdown from "./session-dropdown";
+import EnvironmentDropdown from "./environment-dropdown";
 import PlanUsage from "./plan-usage";
 import NativeNavigation from "./native-navigation";
 import { ScrollArea } from "../ui/scroll-area";
-import FoldersDropdownList from "./folders-dropdown-list";
+import SessionsDropdownList from "./sessions-dropdown-list";
 import UserCard from "./user-card";
 
 interface SidebarProps {
-  params: { sessionId: string };
+  params: { environmentId: string };
   className?: string;
 }
 
@@ -34,17 +34,17 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
   const { data: subscriptionData, error: subscriptionError } =
     await getUserSubscriptionStatus(user.id);
 
-  const { data: sessionFolderData, error: foldersError } = await getFolders(
-    params.sessionId
+  const { data: environmentSessionData, error: sessionsError } = await getSessions(
+    params.environmentId
   );
 
-  if (subscriptionError || foldersError) redirect("/dashboard");
+  if (subscriptionError || sessionsError) redirect("/dashboard");
 
-  const [privateSessions, collaboratingSessions, sharedSessions] =
+  const [privateEnvironments, collaboratingEnvironments, sharedEnvironments] =
     await Promise.all([
-      getPrivateSessions(user.id),
-      getSharedSessions(user.id),
-      getCollaboratingSessions(user.id),
+      getPrivateEnvironments(user.id),
+      getSharedEnvironments(user.id),
+      getCollaboratingEnvironments(user.id),
     ]);
 
   return (
@@ -55,21 +55,21 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
       )}
     >
       <div>
-        <SessionDropdown
-          privateSessions={privateSessions}
-          collaboratingSessions={collaboratingSessions}
-          sharedSessions={sharedSessions}
+        <EnvironmentDropdown
+          privateEnvironments={privateEnvironments}
+          collaboratingEnvironments={collaboratingEnvironments}
+          sharedEnvironments={sharedEnvironments}
           defaultValue={[
-            ...privateSessions,
-            ...sharedSessions,
-            ...collaboratingSessions,
-          ].find((session) => session.id === params.sessionId)}
+            ...privateEnvironments,
+            ...sharedEnvironments,
+            ...collaboratingEnvironments,
+          ].find((environment) => environment.id === params.environmentId)}
         />
         <PlanUsage
-          foldersLength={sessionFolderData?.length || 0}
+          sessionsLength={environmentSessionData?.length || 0}
           subscription={subscriptionData}
         />
-        <NativeNavigation mySessionId={params.sessionId} />
+        <NativeNavigation myEnvironmentId={params.environmentId} />
         <ScrollArea className="overflow-scroll h-[450px] relative">
           <div
             className="pointer-events-none 
@@ -82,9 +82,9 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
           to-transparent 
           z-40"
           />
-          <FoldersDropdownList
-            sessionFolders={sessionFolderData || []}
-            sessionId={params.sessionId}
+          <SessionsDropdownList
+            environmentSessions={environmentSessionData || []}
+            environmentId={params.environmentId}
           />
         </ScrollArea>
       </div>

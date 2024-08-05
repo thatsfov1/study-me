@@ -10,6 +10,20 @@ import {
 import { prices, subscription_status, users } from "../../../migrations/schema";
 import { sql } from "drizzle-orm";
 
+export const environments = pgTable("environments", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  created_at: timestamp("created_at", {
+    withTimezone: true,
+    mode: "string",
+  })
+    .defaultNow()
+    .notNull(),
+  environment_owner: uuid("environment_owner").notNull(),
+  title: text("title").notNull(),
+  data: text("data"),
+  in_trash: text("in_trash"),
+});
+
 export const sessions = pgTable("sessions", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
   created_at: timestamp("created_at", {
@@ -18,43 +32,10 @@ export const sessions = pgTable("sessions", {
   })
     .defaultNow()
     .notNull(),
-  session_owner: uuid("session_owner").notNull(),
   title: text("title").notNull(),
   data: text("data"),
   in_trash: text("in_trash"),
-});
-
-export const folders = pgTable("folders", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
-  created_at: timestamp("created_at", {
-    withTimezone: true,
-    mode: "string",
-  })
-    .defaultNow()
-    .notNull(),
-  title: text("title").notNull(),
-  data: text("data"),
-  in_trash: text("in_trash"),
-  session_id: uuid("session_id").notNull().references(() => sessions.id, {
-    onDelete: "cascade",
-  }),
-});
-
-export const files = pgTable("files", {
-  id: uuid("id").defaultRandom().primaryKey().notNull(),
-  created_at: timestamp("created_at", {
-    withTimezone: true,
-    mode: "string",
-  })
-    .defaultNow()
-    .notNull(),
-  title: text("title").notNull(),
-  data: text("data"),
-  in_trash: text("in_trash"),
-  session_id: uuid("session_id").references(() => sessions.id, {
-    onDelete: "cascade",
-  }),
-  folder_id: uuid("folder_id").references(() => folders.id, {
+  environment_id: uuid("environment_id").notNull().references(() => environments.id, {
     onDelete: "cascade",
   }),
 });
@@ -108,9 +89,9 @@ export const subscriptions = pgTable("subscriptions", {
 
 export const collaborators = pgTable("collaborators", {
   id: uuid("id").defaultRandom().primaryKey().notNull(),
-  session_id: uuid("session_id")
+  environment_id: uuid("environment_id")
     .notNull()
-    .references(() => sessions.id, { onDelete: "cascade" }),
+    .references(() => environments.id, { onDelete: "cascade" }),
   created_at: timestamp("created_at", {
     withTimezone: true,
     mode: "string",

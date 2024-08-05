@@ -14,15 +14,15 @@ const Dashboard = async () => {
   const {data:{user}} = await supabase.auth.getUser();
   if(!user) return
 
-  const session = await db.query.sessions.findFirst({
-    where: (session, {eq}) => eq(session.session_owner, user.id) 
+  const environment = await db.query.environments.findFirst({
+    where: (environment, {eq}) => eq(environment.environment_owner, user.id) 
   })
 
   const {data:subscription, error:subscriptionError} = await getUserSubscriptionStatus(user.id) 
 
   if(subscriptionError) return;
   
-  if(!session){
+  if(!environment){
     return (
     <div className="bg-background h-screen w-screen flex justify-center items-center">
       <DashboardSetup user={user} subscription={subscription}></DashboardSetup>
@@ -30,7 +30,7 @@ const Dashboard = async () => {
     )
   } 
 
-  redirect(`/dashboard/${session.id}`)
+  redirect(`/dashboard/${environment.id}`)
 
   // const [goals, setGoals] = useState<TGoal[]>([]);
   // const [goalTitle, setGoalTitle] = useState("");
@@ -57,7 +57,7 @@ const Dashboard = async () => {
     <div className="flex">
       <div className="px-8 py-4 relative w-[80vw]">
         <h1 className="text-3xl font-bold text-slate-800">
-          What's your goal for today's session
+          What's your goal for today's environment
         </h1>
         {/* <ul className="p-4">
           {goals &&

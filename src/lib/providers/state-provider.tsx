@@ -7,110 +7,110 @@ import React, {
   useMemo,
   useReducer,
 } from 'react';
-import { Folder, session } from '../supabase/supabase.types';
+import { Session, environment } from '../supabase/supabase.types';
 import { usePathname } from 'next/navigation';
 
-export type appSessionsType = session & {
-  folders: Folder[] | [];
+export type appEnvironmentsType = environment & {
+  sessions: Session[] | [];
 };
 
 interface AppState {
-  sessions: appSessionsType[] | [];
+  environments: appEnvironmentsType[] | [];
 }
 
 type Action =
-  | { type: 'ADD_SESSION'; payload: appSessionsType }
-  | { type: 'DELETE_SESSION'; payload: string }
+  | { type: 'ADD_ENVIRONMENT'; payload: appEnvironmentsType }
+  | { type: 'DELETE_ENVIRONMENT'; payload: string }
   | {
-      type: 'UPDATE_SESSION';
-      payload: { session: Partial<appSessionsType>; session_id: string };
+      type: 'UPDATE_ENVIRONMENT';
+      payload: { environment: Partial<appEnvironmentsType>; environment_id: string };
+    }
+  | {
+      type: 'SET_ENVIRONMENTS';
+      payload: { environments: appEnvironmentsType[] | [] };
     }
   | {
       type: 'SET_SESSIONS';
-      payload: { sessions: appSessionsType[] | [] };
+      payload: { environment_id: string; sessions: [] | Session[] };
     }
   | {
-      type: 'SET_FOLDERS';
-      payload: { session_id: string; folders: [] | Folder[] };
+      type: 'ADD_SESSION';
+      payload: { environment_id: string; session: Session };
     }
   | {
-      type: 'ADD_FOLDER';
-      payload: { session_id: string; folder: Folder };
+      type: 'DELETE_SESSION';
+      payload: { environment_id: string; sessionId: string };
     }
   | {
-      type: 'DELETE_FOLDER';
-      payload: { session_id: string; folderId: string };
-    }
-  | {
-      type: 'UPDATE_FOLDER';
+      type: 'UPDATE_SESSION';
       payload: {
-        folder: Partial<Folder>;
-        session_id: string;
-        folderId: string;
+        session: Partial<Session>;
+        environment_id: string;
+        sessionId: string;
       };
     }
 
-const initialState: AppState = { sessions: [] };
+const initialState: AppState = { environments: [] };
 
 const appReducer = (
   state: AppState = initialState,
   action: Action
 ): AppState => {
   switch (action.type) {
-    case 'ADD_SESSION':
+    case 'ADD_ENVIRONMENT':
       return {
         ...state,
-        sessions: [...state.sessions, action.payload],
+        environments: [...state.environments, action.payload],
       };
-    case 'DELETE_SESSION':
+    case 'DELETE_ENVIRONMENT':
       return {
         ...state,
-        sessions: state.sessions.filter(
-          (session) => session.id !== action.payload
+        environments: state.environments.filter(
+          (environment) => environment.id !== action.payload
         ),
       };
-    case 'UPDATE_SESSION':
+    case 'UPDATE_ENVIRONMENT':
       return {
         ...state,
-        sessions: state.sessions.map((session) => {
-          if (session.id === action.payload.session_id) {
+        environments: state.environments.map((environment) => {
+          if (environment.id === action.payload.environment_id) {
             return {
-              ...session,
-              ...action.payload.session,
+              ...environment,
+              ...action.payload.environment,
             };
           }
-          return session;
+          return environment;
         }),
+      };
+    case 'SET_ENVIRONMENTS':
+      return {
+        ...state,
+        environments: action.payload.environments,
       };
     case 'SET_SESSIONS':
       return {
         ...state,
-        sessions: action.payload.sessions,
-      };
-    case 'SET_FOLDERS':
-      return {
-        ...state,
-        sessions: state.sessions.map((session) => {
-          if (session.id === action.payload.session_id) {
+        environments: state.environments.map((environment) => {
+          if (environment.id === action.payload.environment_id) {
             return {
-              ...session,
-              folders: action.payload.folders.sort(
+              ...environment,
+              sessions: action.payload.sessions.sort(
                 (a, b) =>
                   new Date(a.created_at).getTime() -
                   new Date(b.created_at).getTime()
               ),
             };
           }
-          return session;
+          return environment;
         }),
       };
-    case 'ADD_FOLDER':
+    case 'ADD_SESSION':
       return {
         ...state,
-        sessions: state.sessions.map((session) => {
+        environments: state.environments.map((environment) => {
           return {
-            ...session,
-            folders: [...session.folders, action.payload.folder].sort(
+            ...environment,
+            sessions: [...environment.sessions, action.payload.session].sort(
               (a, b) =>
                 new Date(a.created_at).getTime() -
                 new Date(b.created_at).getTime()
@@ -118,37 +118,37 @@ const appReducer = (
           };
         }),
       };
-    case 'UPDATE_FOLDER':
+    case 'UPDATE_SESSION':
       return {
         ...state,
-        sessions: state.sessions.map((session) => {
-          if (session.id === action.payload.session_id) {
+        environments: state.environments.map((environment) => {
+          if (environment.id === action.payload.environment_id) {
             return {
-              ...session,
-              folders: session.folders.map((folder) => {
-                if (folder.id === action.payload.folderId) {
-                  return { ...folder, ...action.payload.folder };
+              ...environment,
+              sessions: environment.sessions.map((session) => {
+                if (session.id === action.payload.sessionId) {
+                  return { ...session, ...action.payload.session };
                 }
-                return folder;
+                return session;
               }),
             };
           }
-          return session;
+          return environment;
         }),
       };
-    case 'DELETE_FOLDER':
+    case 'DELETE_SESSION':
       return {
         ...state,
-        sessions: state.sessions.map((session) => {
-          if (session.id === action.payload.session_id) {
+        environments: state.environments.map((environment) => {
+          if (environment.id === action.payload.environment_id) {
             return {
-              ...session,
-              folders: session.folders.filter(
-                (folder) => folder.id !== action.payload.folderId
+              ...environment,
+              sessions: environment.sessions.filter(
+                (session) => session.id !== action.payload.sessionId
               ),
             };
           }
-          return session;
+          return environment;
         }),
       };
     default:
@@ -160,8 +160,8 @@ const AppStateContext = createContext<
   | {
       state: AppState;
       dispatch: Dispatch<Action>;
+      environmentId: string | undefined;
       sessionId: string | undefined;
-      folderId: string | undefined;
     }
   | undefined
 >(undefined);
@@ -174,7 +174,7 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
   const pathname = usePathname();
 
-  const sessionId = useMemo(() => {
+  const environmentId = useMemo(() => {
     const urlSegments = pathname?.split('/').filter(Boolean);
     if (urlSegments)
       if (urlSegments.length > 1) {
@@ -182,7 +182,7 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
       }
   }, [pathname]);
 
-  const folderId = useMemo(() => {
+  const sessionId = useMemo(() => {
     const urlSegments = pathname?.split('/').filter(Boolean);
     if (urlSegments)
       if (urlSegments?.length > 2) {
@@ -197,7 +197,7 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
 
   return (
     <AppStateContext.Provider
-      value={{ state, dispatch, sessionId, folderId }}
+      value={{ state, dispatch, environmentId, sessionId }}
     >
       {children}
     </AppStateContext.Provider>

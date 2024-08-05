@@ -1,1 +1,1 @@
-export const MAX_FOLDERS_PER_FREE = 100
+export const MAX_SESSIONS_PER_FREE = 100

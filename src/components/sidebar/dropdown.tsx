@@ -5,7 +5,7 @@ import React, { useState, useMemo } from "react";
 import { AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { updateFolder } from "@/lib/supabase/queries";
+import { updateSession } from "@/lib/supabase/queries";
 import TooltipComponent from "../global/tooltip-component";
 import { PlusIcon, Trash } from "lucide-react";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
@@ -26,7 +26,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   ...props
 }) => {
   const supabase = createClientComponentClient();
-  const { state, dispatch, sessionId, folderId } = useAppState();
+  const { state, dispatch, environmentId, sessionId } = useAppState();
   const { user } = useSupabaseUser();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -38,23 +38,23 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   const handleBlur = async () => {
     setIsEditing(false);
-    const fId = id.split("folder");
-    if (!folderTitle) return;
-    await updateFolder({ title }, fId[0]);
+    const fId = id.split("session");
+    if (!sessionTitle) return;
+    await updateSession({ title }, fId[0]);
   };
 
   const moveToTrash = async () => {
-    if (!user || !sessionId) return;
-    const pathId = id.split("folder");
+    if (!user || !environmentId) return;
+    const pathId = id.split("session");
     dispatch({
-      type: "UPDATE_FOLDER",
+      type: "UPDATE_SESSION",
       payload: {
-        folder: { in_trash: `Deleted by ${user?.email}` },
-        folderId: pathId[0],
-        session_id: sessionId,
+        session: { in_trash: `Deleted by ${user?.email}` },
+        sessionId: pathId[0],
+        environment_id: environmentId,
       },
     });
-    const { data, error } = await updateFolder(
+    const { data, error } = await updateSession(
       { in_trash: `Deleted by ${user?.email}` },
       pathId[0]
     );
@@ -62,37 +62,37 @@ const Dropdown: React.FC<DropdownProps> = ({
       toast({
         title: "Error",
         variant: "destructive",
-        description: `Failed to move folder to trash `,
+        description: `Failed to move session to trash `,
       });
     } else {
       toast({
         title: "Success",
-        description: `Moved folder to trash `,
+        description: `Moved session to trash `,
       });
     }
   };
 
   const navigatePage = (accordionId: string) => {
-    router.push(`/dashboard/${sessionId}/${accordionId}`);
+    router.push(`/dashboard/${environmentId}/${accordionId}`);
   };
 
-  const folderTitle: string | undefined = useMemo(() => {
-    const stateTitle = state.sessions
-      .find((session) => session.id === sessionId)
-      ?.folders.find((folder) => folder.id === id)?.title;
+  const sessionTitle: string | undefined = useMemo(() => {
+    const stateTitle = state.environments
+      .find((environment) => environment.id === environmentId)
+      ?.sessions.find((session) => session.id === id)?.title;
     if (title === stateTitle || !stateTitle) return title;
     return stateTitle;
-  }, [state, sessionId]);
+  }, [state, environmentId]);
 
-  const folderTitleChange = (e: any) => {
-    if (!sessionId) return;
-    const fId = id.split("folder");
+  const sessionTitleChange = (e: any) => {
+    if (!environmentId) return;
+    const fId = id.split("session");
     dispatch({
-      type: "UPDATE_FOLDER",
+      type: "UPDATE_SESSION",
       payload: {
-        folder: { title: e.target.value },
-        folderId: fId[0],
-        session_id: sessionId,
+        session: { title: e.target.value },
+        sessionId: fId[0],
+        environment_id: environmentId,
       },
     });
   };
@@ -107,23 +107,23 @@ const Dropdown: React.FC<DropdownProps> = ({
       }}
     >
       <AccordionTrigger className="hover:no-underline p-2 text-muted-foreground text-sm">
-        <div className="text-black whitespace-nowrap flex justify-between items-center w-full relative group/folder">
+        <div className="text-black whitespace-nowrap flex justify-between items-center w-full relative group/session">
           <div className="overflow-hidden">
             <input
               onDoubleClick={handleDoubleClick}
               onBlur={handleBlur}
               readOnly={!isEditing}
               type="text"
-              value={folderTitle}
-              onChange={folderTitleChange}
+              value={sessionTitle}
+              onChange={sessionTitleChange}
               className={clsx("outline-none overflow-hidden w-[140px]", {
                 "bg-muted cursor-text": isEditing,
                 "bg-transparent cursor-pointer": !isEditing,
               })}
             />
           </div>
-          <div className="h-full hidden rounded-sm absolute right-0 items-center justify-center group-hover/folder:block">
-            <TooltipComponent message="Delete Folder">
+          <div className="h-full hidden rounded-sm absolute right-0 items-center justify-center group-hover/session:block">
+            <TooltipComponent message="Delete Session">
               <Trash
                 onClick={moveToTrash}
                 size={15}

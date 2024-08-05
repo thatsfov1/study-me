@@ -2,11 +2,11 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import React, { useEffect } from "react";
 import { useAppState } from "../providers/state-provider";
 import { useRouter } from "next/navigation";
-import { Folder } from "../supabase/supabase.types";
+import { Session } from "../supabase/supabase.types";
 
 const useSupabaseRealtime = () => {
   const supabase = createClientComponentClient();
-  const { dispatch, state, sessionId: selectedSession } = useAppState();
+  const { dispatch, state, environmentId: selectedEnvironment } = useAppState();
 
   const router = useRouter();
 
@@ -15,63 +15,63 @@ const useSupabaseRealtime = () => {
       .channel("db-changes")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "folders" },
+        { event: "*", schema: "public", table: "sessions" },
         async (payload) => {
           if (payload.eventType === "INSERT") {
             console.log("🟢 RECEIVED REAL TIME EVENT");
             const {
-              folder_id: folderId,
               session_id: sessionId,
+              environment_id: environmentId,
               id: fileId,
             } = payload.new;
             if (
-              !state.sessions
-                .find((session) => session.id === sessionId)
-                ?.folders.find((folder) => folder.id === folderId)
+              !state.environments
+                .find((environment) => environment.id === environmentId)
+                ?.sessions.find((session) => session.id === sessionId)
             ) {
-              const newFolder: Folder = {
+              const newSession: Session = {
                 id: payload.new.id,
-                session_id: payload.new.workspace_id,
+                environment_id: payload.new.workspace_id,
                 created_at: payload.new.created_at,
                 title: payload.new.title,
                 data: payload.new.data,
                 in_trash: payload.new.in_trash,
               };
               dispatch({
-                type: "ADD_FOLDER",
-                payload: { folder: newFolder, session_id: sessionId },
+                type: "ADD_SESSION",
+                payload: { session: newSession, environment_id: environmentId },
               });
             }
           } else if (payload.eventType === "DELETE") {
+            let environmentId = "";
             let sessionId = "";
-            let folderId = "";
-            const fileExists = state.sessions.some((session) =>
-              session.folders.some((folder) => {
-                if (folder.id === payload.old.id) {
+            const fileExists = state.environments.some((environment) =>
+              environment.sessions.some((session) => {
+                if (session.id === payload.old.id) {
+                  environmentId = environment.id;
                   sessionId = session.id;
-                  folderId = folder.id;
                   return true;
                 }
               })
             );
-            if (fileExists && sessionId && folderId) {
-              router.replace(`/dashboard/${sessionId}`);
+            if (fileExists && environmentId && sessionId) {
+              router.replace(`/dashboard/${environmentId}`);
               dispatch({
-                type: "DELETE_FOLDER",
-                payload: { folderId, session_id: sessionId },
+                type: "DELETE_SESSION",
+                payload: { sessionId, environment_id: environmentId },
               });
             }
           } else if (payload.eventType === "UPDATE") {
-            const { folder_id: folderId, session_id: sessionId } = payload.new;
-            state.sessions.some((session) =>
-              session.folders.some((folder) => {
-                if (folder.id === payload.new.id) {
+            const { session_id: sessionId, environment_id: environmentId } = payload.new;
+            state.environments.some((environment) =>
+              environment.sessions.some((session) => {
+                if (session.id === payload.new.id) {
                   dispatch({
-                    type: "UPDATE_FOLDER",
+                    type: "UPDATE_SESSION",
                     payload: {
-                      session_id: sessionId,
-                      folderId,
-                      folder: {
+                      environment_id: environmentId,
+                      sessionId,
+                      session: {
                         title: payload.new.title,
                         in_trash: payload.new.in_trash,
                       },
@@ -89,7 +89,7 @@ const useSupabaseRealtime = () => {
     return () => {
       channel.unsubscribe();
     };
-  }, [supabase, state, selectedSession]);
+  }, [supabase, state, selectedEnvironment]);
 
   return null;
 };

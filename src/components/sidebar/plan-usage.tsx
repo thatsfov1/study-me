@@ -1,26 +1,26 @@
 'use client'
-import { MAX_FOLDERS_PER_FREE } from '@/lib/constants'
+import { MAX_SESSIONS_PER_FREE } from '@/lib/constants'
 import { useAppState } from '@/lib/providers/state-provider'
 import { Subscription } from '@/lib/supabase/supabase.types'
 import React, { useEffect, useState } from 'react'
 import { Progress } from '../ui/progress'
 
 interface PlanUsageProps {
-    foldersLength: number
+    sessionsLength: number
     subscription: Subscription | null
 }
 
 
 
-const PlanUsage:React.FC<PlanUsageProps> = ({foldersLength, subscription}) => {
-    const {sessionId, state} = useAppState()
-    const [usagePercentage, setUsagePercentage] = useState((foldersLength/MAX_FOLDERS_PER_FREE)*100)
+const PlanUsage:React.FC<PlanUsageProps> = ({sessionsLength, subscription}) => {
+    const {environmentId, state} = useAppState()
+    const [usagePercentage, setUsagePercentage] = useState((sessionsLength/MAX_SESSIONS_PER_FREE)*100)
     useEffect(() => {
-        const stateFoldersLength = state.sessions.find((session) => session.id === sessionId)?.folders.length
+        const stateSessionsLength = state.environments.find((environment) => environment.id === environmentId)?.sessions.length
 
-        if(stateFoldersLength === undefined) return;
-        setUsagePercentage((stateFoldersLength/MAX_FOLDERS_PER_FREE)*100)
-    }, [sessionId, state])
+        if(stateSessionsLength === undefined) return;
+        setUsagePercentage((stateSessionsLength/MAX_SESSIONS_PER_FREE)*100)
+    }, [environmentId, state])
     
   return (
     <article className='mb-4'>

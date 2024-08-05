@@ -6,18 +6,18 @@ import Settings from '../settings/settings'
 
 interface NativeNavigationProps {
     className?: string
-    mySessionId: string
+    myEnvironmentId: string
     getSelectedElement?: (selection:string) => void
 }
 
-const NativeNavigation:React.FC<NativeNavigationProps> = ({className, mySessionId,getSelectedElement}) => {
+const NativeNavigation:React.FC<NativeNavigationProps> = ({className, myEnvironmentId,getSelectedElement}) => {
   return (
     <nav className={twMerge('my-2',className)}>
         <ul className='flex flex-col gap-2'>
             <li>
-                <Link className='group/native flex gap-2' href={`/dashboard/${mySessionId}`}>
+                <Link className='group/native flex gap-2' href={`/dashboard/${myEnvironmentId}`}>
                 <House />
-                <span>My session</span>
+                <span>My environment</span>
                 </Link>
             </li>
             <Settings>
@@ -27,13 +27,13 @@ const NativeNavigation:React.FC<NativeNavigationProps> = ({className, mySessionI
                 </li>
             </Settings>
             <li>
-                <Link className='group/native flex gap-2' href={`/dashboard/${mySessionId}`}>
+                <Link className='group/native flex gap-2' href={`/dashboard/${myEnvironmentId}`}>
                 <Music />
                 <span>Background Music</span>
                 </Link>
             </li>
             <li>
-                <Link className='group/native flex gap-2' href={`/dashboard/${mySessionId}`}>
+                <Link className='group/native flex gap-2' href={`/dashboard/${myEnvironmentId}`}>
                 <Trash2 />
                 <span>Trash</span>
                 </Link>

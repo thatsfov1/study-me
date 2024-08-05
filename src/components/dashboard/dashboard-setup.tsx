@@ -3,7 +3,6 @@ import { AuthUser } from "@supabase/supabase-js";
 import React, { useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { v4 } from "uuid";
-
 import {
   Card,
   CardContent,
@@ -13,15 +12,15 @@ import {
 } from "../ui/card";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { Subscription, session } from "@/lib/supabase/supabase.types";
+import { Subscription, environment } from "@/lib/supabase/supabase.types";
 import { Button } from "../ui/button";
 import Loader from "../global/loader";
-import { createSession } from "@/lib/supabase/queries";
+import { createEnvironment } from "@/lib/supabase/queries";
 import { useToast } from "../ui/use-toast";
 import { useRouter } from "next/navigation";
 import { useAppState } from "@/lib/providers/state-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { CreateSessionFormSchema } from "@/lib/types";
+import { CreateEnvironmentFormSchema } from "@/lib/types";
 import { z } from "zod";
 
 interface DashboardSetupProps {
@@ -41,51 +40,51 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
     handleSubmit,
     reset,
     formState: { isSubmitting: isLoading, errors },
-  } = useForm<z.infer<typeof CreateSessionFormSchema>>({
+  } = useForm<z.infer<typeof CreateEnvironmentFormSchema>>({
     mode: "onChange",
     defaultValues: {
-      sessionName: '',
+      environmentName: '',
     },
   });
 
   const supabase = createClientComponentClient();
 
   const onSubmit: SubmitHandler<
-    z.infer<typeof CreateSessionFormSchema>
+    z.infer<typeof CreateEnvironmentFormSchema>
   > = async (value) => {
-    const sessionUUID = v4();
+    const environmentUUID = v4();
 
     try {
-      const newSession: session = {
+      const newEnvironment: environment = {
         data: null,
         created_at: new Date().toISOString(),
-        id: sessionUUID,
+        id: environmentUUID,
         in_trash: "",
-        title: value.sessionName,
-        session_owner: user.id,
+        title: value.environmentName,
+        environment_owner: user.id,
       };
-      const { data, error: createError } = await createSession(newSession);
+      const { data, error: createError } = await createEnvironment(newEnvironment);
       if (createError) {
         throw new Error();
       }
       dispatch({
-        type: "ADD_SESSION",
-        payload: { ...newSession, folders: [] },
+        type: "ADD_ENVIRONMENT",
+        payload: { ...newEnvironment, sessions: [] },
       });
 
       toast({
-        title: "Session Created",
-        description: `${newSession.title} has been created successfully.`,
+        title: "Environment Created",
+        description: `${newEnvironment.title} has been created successfully.`,
       });
 
-      router.replace(`/dashboard/${newSession.id}`);
+      router.push(`/dashboard/${newEnvironment.id}`);
     } catch (error) {
       console.log(error, "Error");
       toast({
         variant: "destructive",
-        title: "Could not create your session",
+        title: "Could not create your environment",
         description:
-          "Oops! Something went wrong, and we couldn't create your session. Try again or come back later.",
+          "Oops! Something went wrong, and we couldn't create your environment. Try again or come back later.",
       });
     } finally {
       reset();
@@ -95,28 +94,28 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   return (
     <Card className="w-[800px] h-screen sm:h-auto">
       <CardHeader>
-        <CardTitle>Create a session</CardTitle>
-        <CardDescription>Let's create a session to get to work</CardDescription>
+        <CardTitle>Create a environment</CardTitle>
+        <CardDescription>Let's create a environment to get to work</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
               <div className="w-full">
-                <Label htmlFor="sessionName" className="text-sm ">
+                <Label htmlFor="environmentName" className="text-sm ">
                   Name
                 </Label>
                 <Input
-                  id="sessionName"
+                  id="environmentName"
                   type="text"
                   disabled={isLoading}
-                  placeholder="Session Name"
-                  {...register("sessionName", {
-                    required: "Session name is required",
+                  placeholder="Environment Name"
+                  {...register("environmentName", {
+                    required: "Environment name is required",
                   })}
                 />
                 <small className="text-red-400">
-                  {errors?.sessionName?.message?.toString()}
+                  {errors?.environmentName?.message?.toString()}
                 </small>
               </div>
             </div>

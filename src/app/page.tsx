@@ -12,7 +12,7 @@ const Home = () => {
           href="/dashboard" shallow
           className="text-xl py-2 px-4 bg-indigo-500 text-white rounded-lg"
         >
-          Start your session
+          Start your environment
         </Link>
         <p></p>
       </div>

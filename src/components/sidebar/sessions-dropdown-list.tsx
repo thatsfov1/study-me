@@ -1,77 +1,77 @@
 "use client";
 import { useAppState } from "@/lib/providers/state-provider";
-import { Folder } from "@/lib/supabase/supabase.types";
+import { Session } from "@/lib/supabase/supabase.types";
 import React, { useState, useEffect } from "react";
 import TooltipComponent from "../global/tooltip-component";
 import { PlusIcon } from "lucide-react";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { v4 } from "uuid";
 import { useToast } from "../ui/use-toast";
-import { createFolder } from "@/lib/supabase/queries";
+import { createSession } from "@/lib/supabase/queries";
 import { Accordion } from "../ui/accordion";
 import Dropdown from "./dropdown";
 import useSupabaseRealtime from "@/lib/hooks/useSupabaseRealtime";
 import { useSubscriptionModal } from "@/lib/providers/subscription-modal-provider";
 
-interface FoldersDropdownListProps {
-  sessionFolders: Folder[];
-  sessionId: string;
+interface SessionsDropdownListProps {
+  environmentSessions: Session[];
+  environmentId: string;
 }
 
-const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({
-  sessionFolders,
-  sessionId,
+const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
+  environmentSessions,
+  environmentId,
 }) => {
   useSupabaseRealtime()
-  const { state, dispatch, folderId } = useAppState();
-  const [folders, setFolders] = useState(sessionFolders);
+  const { state, dispatch, sessionId } = useAppState();
+  const [sessions, setSessions] = useState(environmentSessions);
   const {open, setOpen} = useSubscriptionModal()
   const { subscription } = useSupabaseUser();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (sessionFolders.length > 0) {
+    if (environmentSessions.length > 0) {
       dispatch({
-        type: "SET_FOLDERS",
-        payload: { session_id: sessionId, folders: sessionFolders },
+        type: "SET_SESSIONS",
+        payload: { environment_id: environmentId, sessions: environmentSessions },
       });
     }
-  }, [sessionFolders, sessionId]);
+  }, [environmentSessions, environmentId]);
 
   useEffect(() => {
-    setFolders(
-      state.sessions.find((session) => session.id === sessionId)?.folders || []
+    setSessions(
+      state.environments.find((environment) => environment.id === environmentId)?.sessions || []
     );
-  }, [state, sessionId]);
+  }, [state, environmentId]);
 
-  const addFolderHandler = async () => {
-    if (folders.length >= 10 && !subscription) {
+  const addSessionHandler = async () => {
+    if (sessions.length >= 100 && !subscription) {
       setOpen(true);
       return;
     }
-    const newFolder: Folder = {
+    const newSession: Session = {
       data: null,
       id: v4(),
       created_at: new Date().toISOString(),
       title: "Untitled",
       in_trash: null,
-      session_id: sessionId,
+      environment_id: environmentId,
     };
     dispatch({
-      type: "ADD_FOLDER",
-      payload: { session_id: sessionId, folder: { ...newFolder } },
+      type: "ADD_SESSION",
+      payload: { environment_id: environmentId, session: { ...newSession } },
     });
-    const { data, error } = await createFolder(newFolder);
+    const { data, error } = await createSession(newSession);
     if (error) {
       toast({
         title: "Error",
         variant: "destructive",
-        description: "Could not create the folder",
+        description: "Could not create the session",
       });
     } else {
       toast({
         title: "Success",
-        description: "Created folder.",
+        description: "Created session.",
       });
     }
   };
@@ -97,11 +97,11 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({
     font-bold 
     text-xs"
         >
-          FOLDERS
+          SESSIONS
         </span>
-        <TooltipComponent message="Create Folder">
+        <TooltipComponent message="Create Session">
           <PlusIcon
-            onClick={addFolderHandler}
+            onClick={addSessionHandler}
             size={16}
             className="group-hover/title:inline-block 
             hidden 
@@ -114,17 +114,17 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({
       </div>
       <Accordion
         type="multiple"
-        defaultValue={[folderId || ""]}
+        defaultValue={[sessionId || ""]}
         className="pb-20"
       >
-        {folders
-          .filter((folder) => !folder.in_trash)
-          .map((folder) => (
-            <Dropdown key={folder.id} title={folder.title} id={folder.id} />
+        {sessions
+          .filter((session) => !session.in_trash)
+          .map((session) => (
+            <Dropdown key={session.id} title={session.title} id={session.id} />
           ))}
       </Accordion>
     </>
   );
 };
 
-export default FoldersDropdownList;
+export default SessionsDropdownList;

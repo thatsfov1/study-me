@@ -15,32 +15,13 @@ export const action = pgEnum("action", ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'
 export const equality_op = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in'])
 
 
-export const sessions = pgTable("sessions", {
+export const environments = pgTable("environments", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	session_owner: uuid("session_owner").notNull(),
+	environment_owner: uuid("environment_owner").notNull(),
 	title: text("title").notNull(),
 	data: text("data"),
 	in_trash: text("in_trash"),
-});
-
-export const folders = pgTable("folders", {
-	id: uuid("id").defaultRandom().primaryKey().notNull(),
-	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	title: text("title").notNull(),
-	data: text("data"),
-	in_trash: text("in_trash"),
-	session_id: uuid("session_id").references(() => sessions.id, { onDelete: "cascade" } ),
-});
-
-export const files = pgTable("files", {
-	id: uuid("id").defaultRandom().primaryKey().notNull(),
-	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	title: text("title").notNull(),
-	data: text("data"),
-	in_trash: text("in_trash"),
-	session_id: uuid("session_id").references(() => sessions.id, { onDelete: "cascade" } ),
-	folder_id: uuid("folder_id").references(() => folders.id, { onDelete: "cascade" } ),
 });
 
 export const users = pgTable("users", {
@@ -60,6 +41,15 @@ export const users = pgTable("users", {
 			name: "users_id_fkey"
 		}),
 	}
+});
+
+export const sessions = pgTable("sessions", {
+	id: uuid("id").defaultRandom().primaryKey().notNull(),
+	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	title: text("title").notNull(),
+	data: text("data"),
+	in_trash: text("in_trash"),
+	environment_id: uuid("environment_id").notNull().references(() => environments.id, { onDelete: "cascade" } ),
 });
 
 export const customers = pgTable("customers", {
@@ -140,7 +130,7 @@ export const subscriptions = pgTable("subscriptions", {
 
 export const collaborators = pgTable("collaborators", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
-	session_id: uuid("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" } ),
+	environment_id: uuid("environment_id").notNull().references(() => environments.id, { onDelete: "cascade" } ),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	user_id: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 });

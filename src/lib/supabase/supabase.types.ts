@@ -1,5 +1,5 @@
 import { InferSelectModel } from "drizzle-orm"
-import { customers, folders, prices, products, sessions, subscriptions, users } from "../../../migrations/schema"
+import { customers, sessions, prices, products, environments, subscriptions, users } from "../../../migrations/schema"
 
 export type Json =
   | string
@@ -39,41 +39,34 @@ export type Database = {
         Row: {
           created_at: string | null
           data: string | null
-          folder_id: string | null
+          session_id: string | null
           id: string
           in_trash: string | null
-          session_id: string | null
-          session_owner: string
+          environment_id: string | null
+          environment_owner: string
           title: string
         }
         Insert: {
           created_at?: string | null
           data?: string | null
-          folder_id?: string | null
+          session_id?: string | null
           id?: string
           in_trash?: string | null
-          session_id?: string | null
-          session_owner: string
+          environment_id?: string | null
+          environment_owner: string
           title: string
         }
         Update: {
           created_at?: string | null
           data?: string | null
-          folder_id?: string | null
+          session_id?: string | null
           id?: string
           in_trash?: string | null
-          session_id?: string | null
-          session_owner?: string
+          environment_id?: string | null
+          environment_owner?: string
           title?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "files_folder_id_folders_id_fk"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "files_session_id_sessions_id_fk"
             columns: ["session_id"]
@@ -81,16 +74,23 @@ export type Database = {
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "files_environment_id_environments_id_fk"
+            columns: ["environment_id"]
+            isOneToOne: false
+            referencedRelation: "environments"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      folders: {
+      sessions: {
         Row: {
           created_at: string | null
           data: string | null
           id: string
           in_trash: string | null
-          session_id: string | null
-          session_owner: string
+          environment_id: string | null
+          environment_owner: string
           title: string
         }
         Insert: {
@@ -98,8 +98,8 @@ export type Database = {
           data?: string | null
           id?: string
           in_trash?: string | null
-          session_id?: string | null
-          session_owner: string
+          environment_id?: string | null
+          environment_owner: string
           title: string
         }
         Update: {
@@ -107,16 +107,16 @@ export type Database = {
           data?: string | null
           id?: string
           in_trash?: string | null
-          session_id?: string | null
-          session_owner?: string
+          environment_id?: string | null
+          environment_owner?: string
           title?: string
         }
         Relationships: [
           {
-            foreignKeyName: "folders_session_id_sessions_id_fk"
-            columns: ["session_id"]
+            foreignKeyName: "sessions_environment_id_environments_id_fk"
+            columns: ["environment_id"]
             isOneToOne: false
-            referencedRelation: "sessions"
+            referencedRelation: "environments"
             referencedColumns: ["id"]
           },
         ]
@@ -198,13 +198,13 @@ export type Database = {
         }
         Relationships: []
       }
-      sessions: {
+      environments: {
         Row: {
           created_at: string | null
           data: string | null
           id: string
           in_trash: string | null
-          session_owner: string
+          environment_owner: string
           title: string
         }
         Insert: {
@@ -212,7 +212,7 @@ export type Database = {
           data?: string | null
           id?: string
           in_trash?: string | null
-          session_owner: string
+          environment_owner: string
           title: string
         }
         Update: {
@@ -220,7 +220,7 @@ export type Database = {
           data?: string | null
           id?: string
           in_trash?: string | null
-          session_owner?: string
+          environment_owner?: string
           title?: string
         }
         Relationships: []
@@ -454,9 +454,9 @@ export type Enums<
     : never
 
 
-export type session = InferSelectModel<typeof sessions>
+export type environment = InferSelectModel<typeof environments>
 export type User = InferSelectModel<typeof users>
-export type Folder = InferSelectModel<typeof folders>
+export type Session = InferSelectModel<typeof sessions>
 export type Product = InferSelectModel<typeof products>
 export type Price = InferSelectModel<typeof prices> & {products?: Product} 
 export type Customer = InferSelectModel<typeof customers>
