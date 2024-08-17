@@ -7,7 +7,10 @@ import React from 'react'
 const EnvironmentPage = async ({params}:{params: {environmentId:string}}) => {
 
   const {data, error} = await getEnvironmentDetails(params.environmentId)
-  if(error || !data?.length) redirect('/dashboard')
+  if(error || !data?.length) {
+    console.log('env err' ,error )
+    redirect('/dashboard')
+  }
 
   return (
     <div className='relative'>

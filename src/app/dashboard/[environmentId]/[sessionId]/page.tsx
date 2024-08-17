@@ -7,8 +7,13 @@ import React from 'react'
 const SessionPage = async ({params}:{params: {sessionId:string}}) => {
 
   const {data, error} = await getSessionDetails(params.sessionId)
-  if(error || !data?.length) redirect('/dashboard')
+  if(error || !data?.length) {
+    console.log('error',error)
+    redirect('/dashboard')
+  }
 
+
+  console.log('selectedDir',data)
   return (
     <div className='relative'>
       <QuillEditor dirType="session" fileId={params.sessionId} dirDetails={data[0] || {}} />

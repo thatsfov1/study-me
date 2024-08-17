@@ -112,9 +112,9 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
           />
         </TooltipComponent>
       </div>
-      <Accordion
-        type="multiple"
-        defaultValue={[sessionId || ""]}
+      <div
+        //type="multiple"
+        //defaultValue={[sessionId || ""]}
         className="pb-20"
       >
         {sessions
@@ -122,7 +122,7 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
           .map((session) => (
             <Dropdown key={session.id} title={session.title} id={session.id} />
           ))}
-      </Accordion>
+      </div>
     </>
   );
 };

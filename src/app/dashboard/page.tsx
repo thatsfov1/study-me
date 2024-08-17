@@ -25,7 +25,7 @@ const Dashboard = async () => {
   if(!environment){
     return (
     <div className="bg-background h-screen w-screen flex justify-center items-center">
-      <DashboardSetup user={user} subscription={subscription}></DashboardSetup>
+      <DashboardSetup user={user} subscription={subscription}/>
     </div>
     )
   } 
@@ -53,44 +53,44 @@ const Dashboard = async () => {
   //   setGoals(filteredGoals);
   // };
 
-  return (
-    <div className="flex">
-      <div className="px-8 py-4 relative w-[80vw]">
-        <h1 className="text-3xl font-bold text-slate-800">
-          What's your goal for today's environment
-        </h1>
-        {/* <ul className="p-4">
-          {goals &&
-            goals.map((goal: TGoal) => (
-              <SingleGoal
-                key={goal.id}
-                handleDeleteGoal={handleDeleteGoal}
-                goal={goal}
-                setGoals={setGoals}
-              />
-            ))}
-        </ul>
-        <form onSubmit={(e: any) => handleSubmit(e)}>
-          <input
-            value={goalTitle}
-            onChange={(e) => setGoalTitle(e.target.value)}
-            className="border-none w-[400px] p-4 pb-80 focus:outline-none"
-            type="text"
-            placeholder="Add a task you need to do today"
-          />
-        </form>
-        {goals.length > 0 ? (
-          <div className="absolute bottom-4 right-4 py-2 px-8 bg-slate-200 rounded-lg cursor-pointer">
-            Move to next phase
-          </div>
-        ) : (
-          <div className="absolute bottom-4 right-4 py-2 px-8 bg-slate-200 rounded-lg cursor-pointer">
-            Skip this part
-          </div>
-        )} */}
-      </div>
-    </div>
-  );
+  // return (
+  //   <div className="flex">
+  //     <div className="px-8 py-4 relative w-[80vw]">
+  //       <h1 className="text-3xl font-bold text-slate-800">
+  //         What's your goal for today's environment
+  //       </h1>
+  //       {/* <ul className="p-4">
+  //         {goals &&
+  //           goals.map((goal: TGoal) => (
+  //             <SingleGoal
+  //               key={goal.id}
+  //               handleDeleteGoal={handleDeleteGoal}
+  //               goal={goal}
+  //               setGoals={setGoals}
+  //             />
+  //           ))}
+  //       </ul>
+  //       <form onSubmit={(e: any) => handleSubmit(e)}>
+  //         <input
+  //           value={goalTitle}
+  //           onChange={(e) => setGoalTitle(e.target.value)}
+  //           className="border-none w-[400px] p-4 pb-80 focus:outline-none"
+  //           type="text"
+  //           placeholder="Add a task you need to do today"
+  //         />
+  //       </form>
+  //       {goals.length > 0 ? (
+  //         <div className="absolute bottom-4 right-4 py-2 px-8 bg-slate-200 rounded-lg cursor-pointer">
+  //           Move to next phase
+  //         </div>
+  //       ) : (
+  //         <div className="absolute bottom-4 right-4 py-2 px-8 bg-slate-200 rounded-lg cursor-pointer">
+  //           Skip this part
+  //         </div>
+  //       )} */}
+  //     </div>
+  //   </div>
+  // );
 };
 
 export default Dashboard;

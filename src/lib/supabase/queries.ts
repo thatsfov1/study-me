@@ -53,35 +53,30 @@ export const getSessions = async (environmentId: string) => {
 
 export const getEnvironmentDetails = async (environmentId: string) => {
   const isValid = validate(environmentId);
-
-  if (!isValid) {
+  if (!isValid)
     return {
-      data: null,
-      error: "Error",
+      data: [],
+      error: 'Error',
     };
-  }
 
   try {
-    const details = (await db
+    const response = (await db
       .select()
       .from(environments)
       .where(eq(environments.id, environmentId))
       .limit(1)) as environment[];
-    return { data: details, error: null };
+    return { data: response, error: null };
   } catch (error) {
     console.log(error);
-    return { data: [], error: "Error" };
+    return { data: [], error: 'Error' };
   }
 };
 
 export const getSessionDetails = async (sessionId: string) => {
   const isValid = validate(sessionId);
-
   if (!isValid) {
-    return {
-      data: null,
-      error: "Error",
-    };
+    data: [];
+    error: 'Error';
   }
 
   try {
@@ -93,7 +88,7 @@ export const getSessionDetails = async (sessionId: string) => {
 
     return { data: response, error: null };
   } catch (error) {
-    return { data: [], error: "Error" };
+    return { data: [], error: 'Error' };
   }
 };
 

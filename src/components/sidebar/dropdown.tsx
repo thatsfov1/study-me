@@ -98,15 +98,14 @@ const Dropdown: React.FC<DropdownProps> = ({
   };
 
   return (
-    <AccordionItem
-      value={id}
+    <div
       className="relative border-none text-md"
       onClick={(e) => {
         e.stopPropagation();
         navigatePage(id);
       }}
     >
-      <AccordionTrigger className="hover:no-underline p-2 text-muted-foreground text-sm">
+      <div className="hover:no-underline text-muted-foreground text-md">
         <div className="text-black whitespace-nowrap flex justify-between items-center w-full relative group/session">
           <div className="overflow-hidden">
             <input
@@ -132,8 +131,8 @@ const Dropdown: React.FC<DropdownProps> = ({
             </TooltipComponent>
           </div>
         </div>
-      </AccordionTrigger>
-    </AccordionItem>
+      </div>
+    </div>
   );
 };
 

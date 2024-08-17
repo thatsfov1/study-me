@@ -38,7 +38,10 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
     params.environmentId
   );
 
-  if (subscriptionError || sessionsError) redirect("/dashboard");
+  if (subscriptionError || sessionsError) {
+    console.error(sessionsError)
+    redirect("/dashboard");
+  }
 
   const [privateEnvironments, collaboratingEnvironments, sharedEnvironments] =
     await Promise.all([

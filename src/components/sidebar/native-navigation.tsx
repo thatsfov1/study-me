@@ -3,6 +3,7 @@ import Link from 'next/link'
 import React from 'react'
 import { twMerge } from 'tailwind-merge'
 import Settings from '../settings/settings'
+import Trash from '../trash/trash'
 
 interface NativeNavigationProps {
     className?: string
@@ -32,12 +33,12 @@ const NativeNavigation:React.FC<NativeNavigationProps> = ({className, myEnvironm
                 <span>Background Music</span>
                 </Link>
             </li>
-            <li>
-                <Link className='group/native flex gap-2' href={`/dashboard/${myEnvironmentId}`}>
+            <Trash>
+                <li className='group/native flex gap-2' >
                 <Trash2 />
                 <span>Trash</span>
-                </Link>
-            </li>
+                </li>
+            </Trash>
         </ul>
     </nav>
   )
