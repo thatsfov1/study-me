@@ -61,7 +61,7 @@ const EnvironmentDropdown: React.FC<EnvironmentDropdownProps> = ({
           {selectedOption ? (
             <SelectedEnvironment environment={selectedOption} />
           ) : (
-            'Select a environment'
+            'Select an environment'
           )}
         </span>
       </div>
@@ -124,7 +124,7 @@ const EnvironmentDropdown: React.FC<EnvironmentDropdownProps> = ({
               )}
             </div>
             <CustomDialogTrigger
-              header="Create A Environment"
+              header="Create an Environment"
               content={<EnvironmentCreator />}
               description="You can change your environment settings after creating the environment too."
             >

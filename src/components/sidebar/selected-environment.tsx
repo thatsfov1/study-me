@@ -15,6 +15,7 @@ const SelectedEnvironment: React.FC<SelectedEnvironmentProps> = ({
 }) => {
   const supabase = createClientComponentClient();
   return (
+    // TODO: on dashboard/env.id link should be global goals of environment (for tasks(or goals) shouldn't be time) 
     <Link
       href={`/dashboard/${environment.id}`}
       onClick={() => {

@@ -53,10 +53,11 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
       data: null,
       id: v4(),
       created_at: new Date().toISOString(),
-      title: "Untitled",
+      title: `Session ${new Date().toLocaleDateString()} ` ,
       in_trash: null,
       environment_id: environmentId,
     };
+    console.log(newSession);
     dispatch({
       type: "ADD_SESSION",
       payload: { environment_id: environmentId, session: { ...newSession } },

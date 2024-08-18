@@ -30,6 +30,8 @@ import { Badge } from "../ui/badge";
 import { useSocket } from "@/lib/providers/socket-provider";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { Plus, PlusIcon } from "lucide-react";
+import Task from "../task/task-setup";
 
 interface QuillEditorProps {
   dirType: "environment" | "session";
@@ -41,8 +43,8 @@ const TOOLBAR_OPTIONS = [
   [{ list: "ordered" }, { list: "bullet" }],
   [{ indent: "-1" }, { indent: "+1" }],
   [{ direction: "rtl" }],
-  [{ size: ["small", false, "large", "huge"] }], 
-  [{ color: [] }, { background: [] }], 
+  [{ size: ["small", false, "large", "huge"] }],
+  [{ color: [] }, { background: [] }],
   [{ font: [] }],
   [{ align: [] }],
 ];
@@ -70,7 +72,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     let selectedDir;
 
     if (dirType === "environment") {
-      selectedDir = state.environments.find((environment) => environment.id === environmentId);
+      selectedDir = state.environments.find(
+        (environment) => environment.id === environmentId
+      );
     }
     if (dirType === "session") {
       selectedDir = state.environments
@@ -79,7 +83,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     }
 
     if (selectedDir) return selectedDir;
-    
+
     return {
       title: dirDetails.title,
       created_at: dirDetails.created_at,
@@ -97,7 +101,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     const environmentDetails = state.environments.find(
       (environment) => environment.id === environmentId
     );
-    const environmentBreadCrump = environmentDetails ? environmentDetails.title : "";
+    const environmentBreadCrump = environmentDetails
+      ? environmentDetails.title
+      : "";
 
     if (segments.length === 1) {
       return environmentBreadCrump;
@@ -112,7 +118,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     const sessionBreadCrump = sessionDetails ? sessionDetails.title : "";
 
     if (segments.length === 2) {
-      return `${environmentBreadCrump} ${sessionBreadCrump}`;
+      return `${environmentBreadCrump} / ${sessionBreadCrump}`;
     }
   }, [state, pathname, environmentId]);
 
@@ -133,7 +139,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             transformOnTextChange: true,
           },
         },
-        placeholder: 'Write your plan for the work...',
+        placeholder: "Write your plan for the work...",
       });
       setQuill(q);
     }
@@ -169,10 +175,10 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     if (!fileId) return;
     let selectedDir;
     const fetchInformation = async () => {
-      if (dirType === 'session') {
+      if (dirType === "session") {
         const { data: selectedDir, error } = await getSessionDetails(fileId);
         if (error || !selectedDir) {
-          return router.replace('/dashboard');
+          return router.replace("/dashboard");
         }
 
         if (!selectedDir[0]) {
@@ -180,9 +186,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         }
         if (quill === null) return;
         if (!selectedDir[0].data) return;
-        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        quill.setContents(JSON.parse(selectedDir[0].data || ""));
         dispatch({
-          type: 'UPDATE_SESSION',
+          type: "UPDATE_SESSION",
           payload: {
             sessionId: fileId,
             session: { data: selectedDir[0].data },
@@ -190,16 +196,18 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           },
         });
       }
-      if (dirType === 'environment') {
-        const { data: selectedDir, error } = await getEnvironmentDetails(fileId);
+      if (dirType === "environment") {
+        const { data: selectedDir, error } = await getEnvironmentDetails(
+          fileId
+        );
         if (error || !selectedDir) {
-          return router.replace('/dashboard');
+          return router.replace("/dashboard");
         }
         if (!selectedDir[0] || quill === null) return;
         if (!selectedDir[0].data) return;
-        quill.setContents(JSON.parse(selectedDir[0].data || ''));
+        quill.setContents(JSON.parse(selectedDir[0].data || ""));
         dispatch({
-          type: 'UPDATE_ENVIRONMENT',
+          type: "UPDATE_ENVIRONMENT",
           payload: {
             environment: { data: selectedDir[0].data },
             environment_id: fileId,
@@ -223,15 +231,15 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         }
       }
     };
-    socket.on('receive-cursor-move', socketHandler);
+    socket.on("receive-cursor-move", socketHandler);
     return () => {
-      socket.off('receive-cursor-move', socketHandler);
+      socket.off("receive-cursor-move", socketHandler);
     };
   }, [quill, socket, fileId, localCursors]);
 
   useEffect(() => {
     if (socket === null || quill === null || !fileId) return;
-    socket.emit('create-room', fileId);
+    socket.emit("create-room", fileId);
   }, [socket, quill, fileId]);
 
   useEffect(() => {
@@ -239,22 +247,22 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
 
     const selectionChangeHandler = (cursorId: string) => {
       return (range: any, oldRange: any, source: any) => {
-        if (source === 'user' && cursorId) {
-          socket.emit('send-cursor-move', range, fileId, cursorId);
+        if (source === "user" && cursorId) {
+          socket.emit("send-cursor-move", range, fileId, cursorId);
         }
       };
     };
     const quillHandler = (delta: any, oldDelta: any, source: any) => {
-      if (source !== 'user') return;
+      if (source !== "user") return;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       setSaving(true);
       const contents = quill.getContents();
       const quillLength = quill.getLength();
       saveTimerRef.current = setTimeout(async () => {
         if (contents && quillLength !== 1 && fileId) {
-          if (dirType == 'environment') {
+          if (dirType == "environment") {
             dispatch({
-              type: 'UPDATE_ENVIRONMENT',
+              type: "UPDATE_ENVIRONMENT",
               payload: {
                 environment: { data: JSON.stringify(contents) },
                 environment_id: fileId,
@@ -262,13 +270,13 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             });
             await updateEnvironment({ data: JSON.stringify(contents) }, fileId);
           }
-          if (dirType == 'session') {
+          if (dirType == "session") {
             if (!environmentId) return;
             dispatch({
-              type: 'UPDATE_SESSION',
+              type: "UPDATE_SESSION",
               payload: {
                 session: { data: JSON.stringify(contents) },
-                environment_id:environmentId,
+                environment_id: environmentId,
                 sessionId: fileId,
               },
             });
@@ -277,17 +285,26 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         }
         setSaving(false);
       }, 850);
-      socket.emit('send-changes', delta, fileId);
+      socket.emit("send-changes", delta, fileId);
     };
-    quill.on('text-change', quillHandler);
-    quill.on('selection-change', selectionChangeHandler(user.id));
+    quill.on("text-change", quillHandler);
+    quill.on("selection-change", selectionChangeHandler(user.id));
 
     return () => {
-      quill.off('text-change', quillHandler);
-      quill.off('selection-change', selectionChangeHandler);
+      quill.off("text-change", quillHandler);
+      quill.off("selection-change", selectionChangeHandler);
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [quill, socket, fileId, user, details, sessionId, environmentId, dispatch]);
+  }, [
+    quill,
+    socket,
+    fileId,
+    user,
+    details,
+    sessionId,
+    environmentId,
+    dispatch,
+  ]);
 
   useEffect(() => {
     if (quill === null || socket === null) return;
@@ -296,9 +313,9 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         quill.updateContents(deltas);
       }
     };
-    socket.on('receive-changes', socketHandler);
+    socket.on("receive-changes", socketHandler);
     return () => {
-      socket.off('receive-changes', socketHandler);
+      socket.off("receive-changes", socketHandler);
     };
   }, [quill, socket, fileId]);
 
@@ -306,7 +323,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     if (!fileId || quill === null) return;
     const room = supabase.channel(fileId);
     const subscription = room
-      .on('presence', { event: 'sync' }, () => {
+      .on("presence", { event: "sync" }, () => {
         const newState = room.presenceState();
         const newCollaborators = Object.values(newState).flat() as any;
         setCollaborators(newCollaborators);
@@ -315,10 +332,10 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
           newCollaborators.forEach(
             (collaborator: { id: string; email: string; avatar: string }) => {
               if (collaborator.id !== user.id) {
-                const userCursor = quill.getModule('cursors');
+                const userCursor = quill.getModule("cursors");
                 userCursor.createCursor(
                   collaborator.id,
-                  collaborator.email.split('@')[0],
+                  collaborator.email.split("@")[0],
                   `#${Math.random().toString(16).slice(2, 8)}`
                 );
                 allCursors.push(userCursor);
@@ -329,17 +346,17 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
         }
       })
       .subscribe(async (status) => {
-        if (status !== 'SUBSCRIBED' || !user) return;
+        if (status !== "SUBSCRIBED" || !user) return;
         const response = await findUser(user.id);
         if (!response) return;
 
         room.track({
           id: user.id,
-          email: user.email?.split('@')[0],
+          email: user.email?.split("@")[0],
           avatar_url: response.avatar_url
-            ? supabase.storage.from('avatars').getPublicUrl(response.avatar_url)
+            ? supabase.storage.from("avatars").getPublicUrl(response.avatar_url)
                 .data.publicUrl
-            : '',
+            : "",
         });
       });
     return () => {
@@ -401,9 +418,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
                 Delete
               </Button>
             </div>
-            <span className="text-sm text-white">
-                {details.in_trash}
-            </span>
+            <span className="text-sm text-white">{details.in_trash}</span>
           </article>
         )}
         <div
@@ -491,7 +506,12 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             {details.title}
           </span>
         </div>
-        <div id="container" className="max-w-[800px]" ref={wrapperRef}></div>
+        <Task>
+          <div className="text-muted-foreground flex rounded-md hover:bg-muted items-center transition-all gap-2 p-2 cursor-pointer my-2">
+            <PlusIcon size="16" /> Create a task for the session
+          </div>
+        </Task>
+        {/* <div id="container" className="max-w-[800px]" ref={wrapperRef}></div> */}
       </div>
     </>
   );

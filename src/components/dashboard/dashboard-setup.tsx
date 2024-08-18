@@ -94,7 +94,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
   return (
     <Card className="w-[800px] h-screen sm:h-auto">
       <CardHeader>
-        <CardTitle>Create a environment</CardTitle>
+        <CardTitle>Create an environment</CardTitle>
         <CardDescription>Let's create a environment to get to work</CardDescription>
       </CardHeader>
       <CardContent>
