@@ -1,5 +1,5 @@
 import { InferSelectModel } from "drizzle-orm"
-import { customers, sessions, prices, products, environments, subscriptions, users } from "../../../migrations/schema"
+import { customers, sessions, prices, products, environments, subscriptions, users, tasks } from "../../../migrations/schema"
 
 export type Json =
   | string
@@ -457,6 +457,7 @@ export type Enums<
 export type environment = InferSelectModel<typeof environments>
 export type User = InferSelectModel<typeof users>
 export type Session = InferSelectModel<typeof sessions>
+export type Task = InferSelectModel<typeof tasks>
 export type Product = InferSelectModel<typeof products>
 export type Price = InferSelectModel<typeof prices> & {products?: Product} 
 export type Customer = InferSelectModel<typeof customers>

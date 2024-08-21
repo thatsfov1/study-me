@@ -14,7 +14,8 @@ const EnvironmentPage = async ({params}:{params: {environmentId:string}}) => {
 
   return (
     <div className='relative'>
-      <QuillEditor dirType="environment" fileId={params.environmentId} dirDetails={data[0] || {}} />
+      {data[0].title}
+      {/* <QuillEditor dirType="environment" fileId={params.environmentId} dirDetails={data[0] || {}} /> */}
     </div>
   )
 }

@@ -32,11 +32,21 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
   useEffect(() => {
     if (environmentSessions.length > 0) {
       dispatch({
-        type: "SET_SESSIONS",
-        payload: { environment_id: environmentId, sessions: environmentSessions },
+        type: 'SET_SESSIONS',
+        payload: {
+          environmentId,
+          sessions: environmentSessions.map((session) => ({
+              ...session,
+              tasks:
+                state.environments
+                  .find((env) => env.id === environmentId)
+                  ?.sessions.find((s) => s.id === session.id)?.tasks || [],
+            })),
+        },
       });
     }
   }, [environmentSessions, environmentId]);
+  
 
   useEffect(() => {
     setSessions(
@@ -60,7 +70,8 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
     console.log(newSession);
     dispatch({
       type: "ADD_SESSION",
-      payload: { environment_id: environmentId, session: { ...newSession } },
+      
+      payload: { environmentId, session: { ...newSession, tasks:[] } },
     });
     const { data, error } = await createSession(newSession);
     if (error) {
@@ -76,7 +87,6 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
       });
     }
   };
-
   return (
     <>
       <div
@@ -114,10 +124,9 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
         </TooltipComponent>
       </div>
       <div
-        //type="multiple"
-        //defaultValue={[sessionId || ""]}
         className="pb-20"
       >
+
         {sessions
           .filter((session) => !session.in_trash)
           .map((session) => (

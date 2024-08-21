@@ -1,6 +1,6 @@
 "use server";
-import { Session, Subscription, User, environment } from "./supabase.types";
-import { sessions, environments, users } from "../../../migrations/schema";
+import { Session, Subscription, Task, User, environment } from "./supabase.types";
+import { sessions, environments, users, tasks } from "../../../migrations/schema";
 import db from "./db";
 import { validate } from "uuid";
 import { eq, and, notExists, ilike } from "drizzle-orm";
@@ -12,6 +12,7 @@ export const createEnvironment = async (environment: environment) => {
     return { data: null, error: null };
   } catch (error) {
     console.log(error);
+    //@ts-ignore
     return { data: null, error: error?.message };
   }
 };
@@ -38,7 +39,6 @@ export const getSessions = async (environmentId: string) => {
       error: "Error",
     };
   }
-
   try {
     const results: Session[] | [] = await db
       .select()
@@ -48,6 +48,41 @@ export const getSessions = async (environmentId: string) => {
     return { data: results, error: null };
   } catch (error) {
     return { data: null, error: `Error ${error}` };
+  }
+};
+
+export const getTaskDetails = async (taskId: string) => {
+  const isValid = validate(taskId);
+  if (!isValid) {
+    data: [];
+    error: 'Error';
+  }
+  try {
+    const response = (await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId))
+      .limit(1)) as Task[];
+    return { data: response, error: null };
+  } catch (error) {
+    console.log('🔴Error', error);
+    return { data: [], error: 'Error' };
+  }
+};
+
+export const getTasks = async (sessionId: string) => {
+  const isValid = validate(sessionId);
+  if (!isValid) return { data: null, error: 'Error' };
+  try {
+    const results = (await db
+      .select()
+      .from(tasks)
+      .orderBy(tasks.created_at)
+      .where(eq(tasks.session_id, sessionId))) as Task[] | [];
+    return { data: results, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: 'Error' };
   }
 };
 
@@ -101,8 +136,19 @@ export const deleteSession = async (sessionId: string) => {
       error: "Error",
     };
   }
-
   await db.delete(sessions).where(eq(sessions.id, sessionId));
+};
+
+export const deleteTask = async (taskId: string) => {
+  const isValid = validate(taskId);
+
+  if (!isValid) {
+    return {
+      data: null,
+      error: "Error",
+    };
+  }
+  await db.delete(tasks).where(eq(tasks.id, taskId));
 };
 
 export const getPrivateEnvironments = async (userId: string) => {
@@ -210,12 +256,35 @@ export const createSession = async (session: Session) => {
   }
 };
 
+export const createTask = async (task: Task) => {
+  try {
+    const response = await db.insert(tasks).values(task);
+    return { data: null, error: null };
+  } catch (err) {
+    console.log(err);
+    return { data: null, error: err.message };
+  }
+};
+
 export const updateSession = async (
   session: Partial<Session>,
   sessionId: string
 ) => {
   try {
     await db.update(sessions).set(session).where(eq(sessions.id, sessionId));
+    return { data: null, error: null };
+  } catch (err) {
+    console.log(err);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const updateTask = async (
+  task: Partial<Task>,
+  taskId: string
+) => {
+  try {
+    await db.update(tasks).set(task).where(eq(tasks.id, taskId));
     return { data: null, error: null };
   } catch (err) {
     console.log(err);

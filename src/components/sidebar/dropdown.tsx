@@ -51,9 +51,9 @@ const Dropdown: React.FC<DropdownProps> = ({
       payload: {
         session: { in_trash: `Deleted by ${user?.email}` },
         sessionId: pathId[0],
-        environment_id: environmentId,
+        environmentId,
       },
-    });
+  });
     const { data, error } = await updateSession(
       { in_trash: `Deleted by ${user?.email}` },
       pathId[0]
@@ -92,7 +92,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       payload: {
         session: { title: e.target.value },
         sessionId: fId[0],
-        environment_id: environmentId,
+        environmentId,
       },
     });
   };

@@ -1,10 +1,10 @@
-import { pgTable, pgEnum, uuid, timestamp, text, foreignKey, jsonb, boolean, bigint, integer } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, pgEnum, uuid, text, boolean, jsonb, timestamp, integer, bigint, date } from "drizzle-orm/pg-core"
   import { sql } from "drizzle-orm"
 
 export const aal_level = pgEnum("aal_level", ['aal1', 'aal2', 'aal3'])
 export const code_challenge_method = pgEnum("code_challenge_method", ['s256', 'plain'])
 export const factor_status = pgEnum("factor_status", ['unverified', 'verified'])
-export const factor_type = pgEnum("factor_type", ['totp', 'webauthn'])
+export const factor_type = pgEnum("factor_type", ['totp', 'webauthn', 'phone'])
 export const one_time_token_type = pgEnum("one_time_token_type", ['confirmation_token', 'reauthentication_token', 'recovery_token', 'email_change_token_new', 'email_change_token_current', 'phone_change_token'])
 export const key_status = pgEnum("key_status", ['default', 'valid', 'invalid', 'expired'])
 export const key_type = pgEnum("key_type", ['aead-ietf', 'aead-det', 'hmacsha512', 'hmacsha256', 'auth', 'shorthash', 'generichash', 'kdf', 'secretbox', 'secretstream', 'stream_xchacha20'])
@@ -15,13 +15,74 @@ export const action = pgEnum("action", ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'
 export const equality_op = pgEnum("equality_op", ['eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'in'])
 
 
-export const environments = pgTable("environments", {
+export const customers = pgTable("customers", {
+	id: uuid("id").primaryKey().notNull().references(() => users.id),
+	stripe_customer_id: text("stripe_customer_id"),
+});
+
+export const products = pgTable("products", {
+	id: text("id").primaryKey().notNull(),
+	active: boolean("active"),
+	name: text("name"),
+	description: text("description"),
+	image: text("image"),
+	metadata: jsonb("metadata"),
+});
+
+export const sessions = pgTable("sessions", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	environment_owner: uuid("environment_owner").notNull(),
 	title: text("title").notNull(),
 	data: text("data"),
 	in_trash: text("in_trash"),
+	environment_id: uuid("environment_id").notNull().references(() => environments.id, { onDelete: "cascade" } ),
+});
+
+export const subscriptions = pgTable("subscriptions", {
+  id: text("id").primaryKey().notNull(),
+  user_id: uuid("user_id")
+    .notNull()
+    .references(() => users.id),
+  status: subscription_status("status"),
+  metadata: jsonb("metadata"),
+  price_id: text("price_id").references(() => prices.id),
+  quantity: integer("quantity"),
+  cancel_at_period_end: boolean("cancel_at_period_end"),
+  created: timestamp("created", { withTimezone: true, mode: "string" })
+    .default(sql`now()`)
+    .notNull(),
+  current_period_start: timestamp("current_period_start", {
+    withTimezone: true,
+    mode: "string",
+  })
+    .default(sql`now()`)
+    .notNull(),
+  current_period_end: timestamp("current_period_end", {
+    withTimezone: true,
+    mode: "string",
+  })
+    .default(sql`now()`)
+    .notNull(),
+  ended_at: timestamp("ended_at", {
+    withTimezone: true,
+    mode: "string",
+  }).default(sql`now()`),
+  cancel_at: timestamp("cancel_at", {
+    withTimezone: true,
+    mode: "string",
+  }).default(sql`now()`),
+  canceled_at: timestamp("canceled_at", {
+    withTimezone: true,
+    mode: "string",
+  }).default(sql`now()`),
+  trial_start: timestamp("trial_start", {
+    withTimezone: true,
+    mode: "string",
+  }).default(sql`now()`),
+  trial_end: timestamp("trial_end", {
+    withTimezone: true,
+    mode: "string",
+  }).default(sql`now()`),
 });
 
 export const users = pgTable("users", {
@@ -43,27 +104,20 @@ export const users = pgTable("users", {
 	}
 });
 
-export const sessions = pgTable("sessions", {
+export const collaborators = pgTable("collaborators", {
+	id: uuid("id").defaultRandom().primaryKey().notNull(),
+	environment_id: uuid("environment_id").notNull().references(() => environments.id, { onDelete: "cascade" } ),
+	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	user_id: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+});
+
+export const environments = pgTable("environments", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	environment_owner: uuid("environment_owner").notNull(),
 	title: text("title").notNull(),
 	data: text("data"),
 	in_trash: text("in_trash"),
-	environment_id: uuid("environment_id").notNull().references(() => environments.id, { onDelete: "cascade" } ),
-});
-
-export const customers = pgTable("customers", {
-	id: uuid("id").primaryKey().notNull().references(() => users.id),
-	stripe_customer_id: text("stripe_customer_id"),
-});
-
-export const products = pgTable("products", {
-	id: text("id").primaryKey().notNull(),
-	active: boolean("active"),
-	name: text("name"),
-	description: text("description"),
-	image: text("image"),
-	metadata: jsonb("metadata"),
 });
 
 export const prices = pgTable("prices", {
@@ -81,56 +135,14 @@ export const prices = pgTable("prices", {
 	metadata: jsonb("metadata"),
 });
 
-export const subscriptions = pgTable("subscriptions", {
-	id: text("id").primaryKey().notNull(),
-	user_id: uuid("user_id")
-	  .notNull()
-	  .references(() => users.id),
-	status: subscription_status("status"),
-	metadata: jsonb("metadata"),
-	price_id: text("price_id").references(() => prices.id),
-	quantity: integer("quantity"),
-	cancel_at_period_end: boolean("cancel_at_period_end"),
-	created: timestamp("created", { withTimezone: true, mode: "string" })
-	  .default(sql`now()`)
-	  .notNull(),
-	current_period_start: timestamp("current_period_start", {
-	  withTimezone: true,
-	  mode: "string",
-	})
-	  .default(sql`now()`)
-	  .notNull(),
-	current_period_end: timestamp("current_period_end", {
-	  withTimezone: true,
-	  mode: "string",
-	})
-	  .default(sql`now()`)
-	  .notNull(),
-	ended_at: timestamp("ended_at", {
-	  withTimezone: true,
-	  mode: "string",
-	}).default(sql`now()`),
-	cancel_at: timestamp("cancel_at", {
-	  withTimezone: true,
-	  mode: "string",
-	}).default(sql`now()`),
-	canceled_at: timestamp("canceled_at", {
-	  withTimezone: true,
-	  mode: "string",
-	}).default(sql`now()`),
-	trial_start: timestamp("trial_start", {
-	  withTimezone: true,
-	  mode: "string",
-	}).default(sql`now()`),
-	trial_end: timestamp("trial_end", {
-	  withTimezone: true,
-	  mode: "string",
-	}).default(sql`now()`),
-  });
-
-export const collaborators = pgTable("collaborators", {
+export const tasks = pgTable("tasks", {
 	id: uuid("id").defaultRandom().primaryKey().notNull(),
-	environment_id: uuid("environment_id").notNull().references(() => environments.id, { onDelete: "cascade" } ),
 	created_at: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	user_id: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	title: text("title").notNull(),
+	description: text("description"),
+	in_trash: text("in_trash"),
+	environment_id: uuid("environment_id").notNull().references(() => environments.id, { onDelete: "cascade" } ),
+	session_id: uuid("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" } ),
+	deadline: date("deadline", {mode:"date"}),
+	time: text("time").notNull(),
 });

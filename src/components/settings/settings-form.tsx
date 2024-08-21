@@ -94,7 +94,7 @@ const SettingsForm = () => {
     if (!environmentId || !e.target.value) return;
     dispatch({
       type: "UPDATE_ENVIRONMENT",
-      payload: { environment_id: environmentId, environment: { title: e.target.value } },
+      payload: { environmentId, environment: { title: e.target.value } },
     });
 
     if (titleTimerRef.current) clearTimeout(titleTimerRef.current);

@@ -38,6 +38,8 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
     params.environmentId
   );
 
+  console.log(environmentSessionData);
+
   if (subscriptionError || sessionsError) {
     console.error(sessionsError)
     redirect("/dashboard");

@@ -53,7 +53,7 @@ const DashboardSetup: React.FC<DashboardSetupProps> = ({
     z.infer<typeof CreateEnvironmentFormSchema>
   > = async (value) => {
     const environmentUUID = v4();
-
+    
     try {
       const newEnvironment: environment = {
         data: null,

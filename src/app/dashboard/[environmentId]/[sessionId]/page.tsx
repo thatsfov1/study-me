@@ -11,8 +11,6 @@ const SessionPage = async ({params}:{params: {sessionId:string}}) => {
     console.log('error',error)
     redirect('/dashboard')
   }
-
-
   console.log('selectedDir',data)
   return (
     <div className='relative'>

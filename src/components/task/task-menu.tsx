@@ -6,7 +6,8 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { v4 } from "uuid";
 import {
   Form,
   FormControl,
@@ -26,17 +27,17 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
+import { Task } from "@/lib/supabase/supabase.types";
+import { createTask } from "@/lib/supabase/queries";
+import { useAppState } from "@/lib/providers/state-provider";
+import { useToast } from "../ui/use-toast";
 
 const taskSchema = z.object({
   name: z.string().min(3, {
     message: "Name of the task must be at least 3 characters.",
   }),
   description: z.string(),
-  deadline: z.optional(
-    z.date({
-      required_error: "A date of birth is required.",
-    })
-  ),
+  deadline: z.optional(z.date()),
   time: z
     .string()
     .refine((value) => Number(value) > 0, {
@@ -50,6 +51,9 @@ const taskSchema = z.object({
 
 const TaskMenu: React.FC = () => {
   const [confirmation, setConfirmation] = useState(false);
+  const { state, dispatch,environmentId, sessionId } = useAppState();
+  const { toast } = useToast();
+
 
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -62,8 +66,47 @@ const TaskMenu: React.FC = () => {
 
   const isLoading = form.formState.isSubmitting;
 
-  const onSubmit = (values: z.infer<typeof taskSchema>) => {
-    console.log(values);
+  const onSubmit: SubmitHandler<z.infer<typeof taskSchema>> = async (
+    values
+  ) => {
+    if(!environmentId || !sessionId) return
+    const taskUUID = v4();
+    try {
+      const newTask: Task = {
+        id: taskUUID,
+        title: values.name,
+        description: values.description,
+        created_at: new Date().toISOString(),
+        in_trash: "",
+        environment_id: environmentId,
+        session_id: sessionId,
+        deadline: values?.deadline || null,
+        time: values.time,
+      };
+      const { data, error:createError } = await createTask(newTask);
+      if (createError) {
+        throw new Error();
+      }
+      dispatch({
+        type: "ADD_TASK",
+        payload: { environmentId, task: newTask, sessionId },
+      })
+      toast({
+        title: "Task Created",
+        description: "Task has been created successfully.",
+      });
+    } catch (error) {
+      console.log(error, "Error");
+      toast({
+        variant: "destructive",
+        title: "Could not create your task",
+        description:
+          "Oops! Something went wrong, and we couldn't create your task. Try again or come back later.",
+      });
+
+    }finally{
+      form.reset();
+    }
   };
 
   return (
@@ -202,7 +245,7 @@ const TaskMenu: React.FC = () => {
               )}
             />
 
-            <Button type="submit" className="w-full p-6">
+            <Button disabled={isLoading} type="submit" className="w-full p-6">
               {!isLoading ? "Create a task" : <Loader />}
             </Button>
           </>

@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  date,
   uuid,
 } from "drizzle-orm/pg-core";
 import { prices, subscription_status, users } from "../../../migrations/schema";
@@ -35,9 +36,38 @@ export const sessions = pgTable("sessions", {
   title: text("title").notNull(),
   data: text("data"),
   in_trash: text("in_trash"),
-  environment_id: uuid("environment_id").notNull().references(() => environments.id, {
-    onDelete: "cascade",
+  environment_id: uuid("environment_id")
+    .notNull()
+    .references(() => environments.id, {
+      onDelete: "cascade",
+    }),
+});
+
+export const tasks = pgTable("tasks", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  created_at: timestamp("created_at", {
+    withTimezone: true,
+    mode: "string",
+  })
+    .defaultNow()
+    .notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  in_trash: text("in_trash"),
+  environment_id: uuid("environment_id")
+    .notNull()
+    .references(() => environments.id, {
+      onDelete: "cascade",
+    }),
+  session_id: uuid("session_id")
+    .notNull()
+    .references(() => sessions.id, {
+      onDelete: "cascade",
+    }),
+  deadline: date("deadline", {
+    mode: "date",
   }),
+  time: text("time").notNull(),
 });
 
 export const subscriptions = pgTable("subscriptions", {
