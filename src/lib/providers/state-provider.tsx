@@ -226,6 +226,31 @@ const appReducer = (
           return environment;
         }),
       };
+    case "SET_TASKS":
+      return {
+        ...state,
+        environments: state.environments.map((environment) => {
+          if (environment.id === action.payload.environmentId) {
+            return {
+              ...environment,
+              sessions: environment.sessions.map((session) => {
+                if (session.id === action.payload.sessionId) {
+                  return {
+                    ...session,
+                    tasks: action.payload.tasks.sort(
+                      (a, b) =>
+                        new Date(a.created_at).getTime() -
+                        new Date(b.created_at).getTime()
+                    ),
+                  };
+                }
+                return session;
+              }),
+            };
+          }
+          return environment; 
+        }),
+      };
     case "UPDATE_TASK":
       return {
         ...state,
@@ -309,7 +334,6 @@ const AppStateProvider: React.FC<AppStateProviderProps> = ({ children }) => {
   //   };
   //   fetchFiles();
   // }, [sessionId, environmentId]);
-
 
   useEffect(() => {
     console.log("App State Changed", state);

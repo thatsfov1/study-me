@@ -60,7 +60,6 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
       return;
     }
     const newSession: Session = {
-      data: null,
       id: v4(),
       created_at: new Date().toISOString(),
       title: `Session ${new Date().toLocaleDateString()} ` ,
@@ -70,7 +69,6 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
     console.log(newSession);
     dispatch({
       type: "ADD_SESSION",
-      
       payload: { environmentId, session: { ...newSession, tasks:[] } },
     });
     const { data, error } = await createSession(newSession);

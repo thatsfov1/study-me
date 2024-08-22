@@ -1,6 +1,10 @@
 "use client";
 import { useAppState } from "@/lib/providers/state-provider";
-import { Session, environment } from "@/lib/supabase/supabase.types";
+import {
+  Session,
+  environment,
+  Task as TTask,
+} from "@/lib/supabase/supabase.types";
 import React, {
   useState,
   useRef,
@@ -17,8 +21,9 @@ import {
   getEnvironmentDetails,
   updateSession,
   updateEnvironment,
+  getTasks,
 } from "@/lib/supabase/queries";
-import { usePathname, useRouter } from "next/navigation";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import {
   TooltipProvider,
   Tooltip,
@@ -31,10 +36,10 @@ import { useSocket } from "@/lib/providers/socket-provider";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Plus, PlusIcon } from "lucide-react";
+import { appSessionsType } from "@/lib/providers/state-provider";
 import Task from "../task/task-setup";
 
 interface QuillEditorProps {
-  dirType: "environment" | "session";
   dirDetails: Session | environment;
   fileId: string;
 }
@@ -50,12 +55,10 @@ interface QuillEditorProps {
 // ];
 
 const QuillEditor: React.FC<QuillEditorProps> = ({
-  dirType,
   dirDetails,
   fileId,
 }) => {
-  const { state, environmentId, sessionId, dispatch } = useAppState();
-  //const [quill, setQuill] = useState<any>(null);
+const { state, environmentId, sessionId, dispatch } = useAppState();
   const supabase = createClientComponentClient();
   const { socket } = useSocket();
   const [collaborators, setCollaborators] = useState<
@@ -65,29 +68,54 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const [localCursors, setLocalCursors] = useState<any>([]);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const [tasks, setTasks] = useState<TTask[]>();
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!sessionId || !environmentId) return;
+    const fetchInformation = async () => {
+      const { data: sessionTasks, error: tasksError } = await getTasks(
+        sessionId
+      );
+      if (tasksError) {
+        console.error(tasksError);
+        redirect(`/dashboard/${environmentId}`);
+      }
+      if (sessionTasks && sessionTasks.length > 0) {
+        dispatch({
+          type: "SET_TASKS",
+          payload: {
+            environmentId,
+            tasks: sessionTasks,
+            sessionId,
+          },
+        });
+      }
+    };
+    fetchInformation()
+  }, [ environmentId, sessionId]);
+
+  useEffect(() => {
+    setTasks(
+      state.environments
+        .find((environment) => environment.id === environmentId)
+        ?.sessions.find((session) => session.id === sessionId)?.tasks || []
+    );
+  }, [state, environmentId, sessionId]);
 
   const details = useMemo(() => {
     let selectedDir;
 
-    if (dirType === "environment") {
-      selectedDir = state.environments.find(
-        (environment) => environment.id === environmentId
-      );
-    }
-    if (dirType === "session") {
-      selectedDir = state.environments
-        .find((environment) => environment.id === environmentId)
-        ?.sessions.find((session) => session.id === fileId);
-    }
+    selectedDir = state.environments
+      .find((environment) => environment.id === environmentId)
+      ?.sessions.find((session) => session.id === fileId);
 
     if (selectedDir) return selectedDir;
 
     return {
       title: dirDetails.title,
       created_at: dirDetails.created_at,
-      data: dirDetails.data,
       in_trash: dirDetails.in_trash,
     } as environment | Session;
   }, [state, environmentId, sessionId]);
@@ -114,7 +142,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     const sessionDetails = environmentDetails?.sessions.find(
       (session) => session.id === sessionSegment
     );
-
     const sessionBreadCrump = sessionDetails ? sessionDetails.title : "";
 
     if (segments.length === 2) {
@@ -170,55 +197,6 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
     await deleteSession(fileId);
     router.replace(`/dashboard/${environmentId}`);
   };
-  useEffect(() => {
-    if (!fileId) return;
-    let selectedDir;
-    const fetchInformation = async () => {
-      if (dirType === "session") {
-        const { data: selectedDir, error } = await getSessionDetails(fileId);
-        if (error || !selectedDir) {
-          return router.replace("/dashboard");
-        }
-
-        if (!selectedDir[0]) {
-          router.replace(`/dashboard/${environmentId}`);
-        }
-        //if (quill === null) return;
-        if (!selectedDir[0].data) return;
-        //quill.setContents(JSON.parse(selectedDir[0].data || ""));
-        dispatch({
-          type: "UPDATE_SESSION",
-          payload: {
-            sessionId: fileId,
-            session: { data: selectedDir[0].data },
-            environmentId: selectedDir[0].environment_id,
-          },
-        });
-      }
-      if (dirType === "environment") {
-        const { data: selectedDir, error } = await getEnvironmentDetails(
-          fileId
-        );
-        if (error || !selectedDir) {
-          return router.replace("/dashboard");
-        }
-        if (!selectedDir[0])
-          //quill === null
-
-          return;
-        if (!selectedDir[0].data) return;
-        //quill.setContents(JSON.parse(selectedDir[0].data || ""));
-        dispatch({
-          type: "UPDATE_ENVIRONMENT",
-          payload: {
-            environment: { data: selectedDir[0].data },
-            environmentId: fileId,
-          },
-        });
-      }
-    };
-    fetchInformation();
-  }, [fileId, environmentId, dirType]);
 
   // useEffect(() => {
   //   if (socket === null || !fileId || !localCursors.length)
@@ -247,45 +225,36 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
   // }, [socket, quill, fileId]);
 
   // useEffect(() => {
-  //   if (quill === null || socket === null || !fileId || !user) return;
+  //   if (socket === null || !fileId || !user) return;
 
-  //   const selectionChangeHandler = (cursorId: string) => {
-  //     return (range: any, oldRange: any, source: any) => {
-  //       if (source === "user" && cursorId) {
-  //         socket.emit("send-cursor-move", range, fileId, cursorId);
-  //       }
-  //     };
-  //   };
-  //   const quillHandler = (delta: any, oldDelta: any, source: any) => {
+  //   // const selectionChangeHandler = (cursorId: string) => {
+  //   //   return (range: any, oldRange: any, source: any) => {
+  //   //     if (source === "user" && cursorId) {
+  //   //       socket.emit("send-cursor-move", range, fileId, cursorId);
+  //   //     }
+  //   //   };
+  //   // };
+  //   const tasksHandler = (delta: any, oldDelta: any, source: any) => {
   //     if (source !== "user") return;
   //     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
   //     setSaving(true);
-  //     const contents = quill.getContents();
-  //     const quillLength = quill.getLength();
+
+  //     const tasks = state.environments.find(
+  //       (env) => env.id === environmentId
+  //     )?.sessions.find(session => session.id === sessionId)?.tasks
+
   //     saveTimerRef.current = setTimeout(async () => {
-  //       if (contents && quillLength !== 1 && fileId) {
-  //         if (dirType == "environment") {
-  //           dispatch({
-  //             type: "UPDATE_ENVIRONMENT",
-  //             payload: {
-  //               environment: { data: JSON.stringify(contents) },
-  //               environment_id: fileId,
-  //             },
-  //           });
-  //           await updateEnvironment({ data: JSON.stringify(contents) }, fileId);
-  //         }
-  //         if (dirType == "session") {
+  //       if (tasks && fileId) {
   //           if (!environmentId) return;
   //           dispatch({
   //             type: "UPDATE_SESSION",
   //             payload: {
-  //               session: { data: JSON.stringify(contents) },
-  //               environment_id: environmentId,
+  //               session: { tasks } ,
+  //               environmentId,
   //               sessionId: fileId,
   //             },
   //           });
   //           await updateSession({ data: JSON.stringify(contents) }, fileId);
-  //         }
   //       }
   //       setSaving(false);
   //     }, 850);
@@ -392,7 +361,7 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             justify-center 
             items-center"
             >
-              <span className="text-white">This {dirType} is in the trash</span>
+              <span className="text-white">This session is in the trash</span>
 
               <Button
                 size="sm"
@@ -510,12 +479,19 @@ const QuillEditor: React.FC<QuillEditorProps> = ({
             {details.title}
           </span>
         </div>
-          <Task>
-            <div className="text-muted-foreground flex rounded-md hover:bg-muted items-center transition-all gap-2 p-2 cursor-pointer my-2">
-              <PlusIcon size="16" /> Create a task for the session
-            </div>
-          </Task>
-      
+        {tasks
+          ?.filter((task) => !task.in_trash)
+          .map((task) => {
+            const customTaskId = `${sessionId}session${task.id}`;
+            console.log(task);
+            return <div>{task.title}</div>;
+          })}
+        <Task>
+          <div className="text-muted-foreground flex rounded-md hover:bg-muted items-center transition-all gap-2 p-2 cursor-pointer my-2">
+            <PlusIcon size="16" /> Create a task for the session
+          </div>
+        </Task>
+
         {/* <div id="container" className="max-w-[800px]" ref={wrapperRef}></div> */}
       </div>
     </>

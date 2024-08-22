@@ -21,7 +21,6 @@ export const environments = pgTable("environments", {
     .notNull(),
   environment_owner: uuid("environment_owner").notNull(),
   title: text("title").notNull(),
-  data: text("data"),
   in_trash: text("in_trash"),
 });
 
@@ -34,7 +33,6 @@ export const sessions = pgTable("sessions", {
     .defaultNow()
     .notNull(),
   title: text("title").notNull(),
-  data: text("data"),
   in_trash: text("in_trash"),
   environment_id: uuid("environment_id")
     .notNull()

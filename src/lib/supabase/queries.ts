@@ -160,7 +160,6 @@ export const getPrivateEnvironments = async (userId: string) => {
       created_at: environments.created_at,
       environment_owner: environments.environment_owner,
       title: environments.title,
-      data: environments.data,
       in_trash: environments.in_trash,
     })
     .from(environments)
@@ -187,7 +186,6 @@ export const getCollaboratingEnvironments = async (userId: string) => {
       created_at: environments.created_at,
       environment_owner: environments.environment_owner,
       title: environments.title,
-      data: environments.data,
       in_trash: environments.in_trash,
     })
     .from(users)
@@ -205,7 +203,6 @@ export const getSharedEnvironments = async (userId: string) => {
       created_at: environments.created_at,
       environment_owner: environments.environment_owner,
       title: environments.title,
-      data: environments.data,
       in_trash: environments.in_trash,
     })
     .from(environments)
