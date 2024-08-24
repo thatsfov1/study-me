@@ -38,27 +38,16 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Plus, PlusIcon } from "lucide-react";
 import { appSessionsType } from "@/lib/providers/state-provider";
 import Task from "../task/task-setup";
+import TaskDropdown from "../task/task-dropdown";
+import { Accordion } from "../ui/accordion";
 
 interface QuillEditorProps {
   dirDetails: Session | environment;
   fileId: string;
 }
 
-// const TOOLBAR_OPTIONS = [
-//   [{ list: "ordered" }, { list: "bullet" }],
-//   [{ indent: "-1" }, { indent: "+1" }],
-//   [{ direction: "rtl" }],
-//   [{ size: ["small", false, "large", "huge"] }],
-//   [{ color: [] }, { background: [] }],
-//   [{ font: [] }],
-//   [{ align: [] }],
-// ];
-
-const QuillEditor: React.FC<QuillEditorProps> = ({
-  dirDetails,
-  fileId,
-}) => {
-const { state, environmentId, sessionId, dispatch } = useAppState();
+const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId }) => {
+  const { state, environmentId, sessionId, dispatch } = useAppState();
   const supabase = createClientComponentClient();
   const { socket } = useSocket();
   const [collaborators, setCollaborators] = useState<
@@ -93,8 +82,8 @@ const { state, environmentId, sessionId, dispatch } = useAppState();
         });
       }
     };
-    fetchInformation()
-  }, [ environmentId, sessionId]);
+    fetchInformation();
+  }, [environmentId, sessionId]);
 
   useEffect(() => {
     setTasks(
@@ -465,34 +454,38 @@ const { state, environmentId, sessionId, dispatch } = useAppState();
           </div>
         </div>
       </div>
-      <div className="flex justify-center items-center flex-col mt-2 relative">
+      <div className="flex flex-col mt-2 ml-24 relative">
         <div
           className="w-full 
-        self-center 
         max-w-[800px] 
         flex 
         flex-col
-         px-7 
+          
          lg:my-8"
         >
           <span className="text-muted-foreground text-3xl font-bold h-9">
             {details.title}
           </span>
         </div>
-        {tasks
-          ?.filter((task) => !task.in_trash)
-          .map((task) => {
-            const customTaskId = `${sessionId}session${task.id}`;
-            console.log(task);
-            return <div>{task.title}</div>;
-          })}
+        <Accordion
+          type="multiple"
+          defaultValue={[sessionId || ""]}
+          className="pb-8"
+        >
+          {tasks
+            ?.filter((task) => !task.in_trash)
+            .map((task) => {
+              const customTaskId = `${sessionId}session${task.id}`;
+              console.log(task);
+              return <TaskDropdown key={task.id} task={task} />;
+            })}
+        </Accordion>
+
         <Task>
-          <div className="text-muted-foreground flex rounded-md hover:bg-muted items-center transition-all gap-2 p-2 cursor-pointer my-2">
+          <div className="text-muted-foreground flex rounded-md hover:bg-muted items-center justify-center transition-all  gap-2 p-2 cursor-pointer my-2 w-[300px]">
             <PlusIcon size="16" /> Create a task for the session
           </div>
         </Task>
-
-        {/* <div id="container" className="max-w-[800px]" ref={wrapperRef}></div> */}
       </div>
     </>
   );

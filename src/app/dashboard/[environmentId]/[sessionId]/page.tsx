@@ -13,8 +13,8 @@ const SessionPage = async ({params}:{params: {sessionId:string}}) => {
   }
   console.log('selectedDir',data)
   return (
-    <div className='relative'>
-      <QuillEditor dirType="session" fileId={params.sessionId} dirDetails={data[0] || {}} />
+  <div className='relative'>
+      <QuillEditor fileId={params.sessionId} dirDetails={data[0] || {}} />
     </div>
   )
 }

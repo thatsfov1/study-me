@@ -2,12 +2,11 @@
 import { useAppState } from "@/lib/providers/state-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import React, { useState, useMemo } from "react";
-import { AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { updateSession } from "@/lib/supabase/queries";
 import TooltipComponent from "../global/tooltip-component";
-import { PlusIcon, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { useToast } from "../ui/use-toast";
 
@@ -38,25 +37,23 @@ const Dropdown: React.FC<DropdownProps> = ({
 
   const handleBlur = async () => {
     setIsEditing(false);
-    const fId = id.split("session");
     if (!sessionTitle) return;
-    await updateSession({ title }, fId[0]);
+    await updateSession({ title }, id);
   };
 
   const moveToTrash = async () => {
     if (!user || !environmentId) return;
-    const pathId = id.split("session");
     dispatch({
       type: "UPDATE_SESSION",
       payload: {
         session: { in_trash: `Deleted by ${user?.email}` },
-        sessionId: pathId[0],
+        sessionId: id,
         environmentId,
       },
   });
     const { data, error } = await updateSession(
       { in_trash: `Deleted by ${user?.email}` },
-      pathId[0]
+      id
     );
     if (error) {
       toast({
@@ -106,7 +103,8 @@ const Dropdown: React.FC<DropdownProps> = ({
       }}
     >
       <div className="hover:no-underline text-muted-foreground text-md">
-        <div className="text-black whitespace-nowrap flex justify-between items-center w-full relative group/session">
+        <div className="text-black whitespace-nowrap flex justify-between items-center w-full relative text-ellipsis
+         group/session">
           <div className="overflow-hidden">
             <input
               onDoubleClick={handleDoubleClick}

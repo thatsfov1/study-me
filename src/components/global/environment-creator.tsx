@@ -46,7 +46,6 @@ const EnvironmentCreator = () => {
     const uuid = v4();
     if (user?.id) {
       const newEnvironment: environment = {
-        data: null,
         created_at: new Date().toISOString(),
         id: uuid,
         in_trash: "",

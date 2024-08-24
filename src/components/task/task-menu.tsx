@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CalendarIcon, Loader } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -28,9 +28,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
 import { Task } from "@/lib/supabase/supabase.types";
-import { createTask } from "@/lib/supabase/queries";
+import { createTask, updateTask } from "@/lib/supabase/queries";
 import { useAppState } from "@/lib/providers/state-provider";
 import { useToast } from "../ui/use-toast";
+
+type TaskMenuProps = {
+  isForEditing?: boolean;
+  task?: Task;
+};
 
 const taskSchema = z.object({
   name: z.string().min(3, {
@@ -49,11 +54,10 @@ const taskSchema = z.object({
     }),
 });
 
-const TaskMenu: React.FC = () => {
+const TaskMenu: React.FC<TaskMenuProps> = ({ isForEditing, task }) => {
   const [confirmation, setConfirmation] = useState(false);
-  const { state, dispatch,environmentId, sessionId } = useAppState();
+  const { state, dispatch, environmentId, sessionId } = useAppState();
   const { toast } = useToast();
-
 
   const form = useForm<z.infer<typeof taskSchema>>({
     resolver: zodResolver(taskSchema),
@@ -66,45 +70,77 @@ const TaskMenu: React.FC = () => {
 
   const isLoading = form.formState.isSubmitting;
 
+  useEffect(() => {
+    if (isForEditing && task) {
+      form.reset({
+        name: task.title,
+        description: task.description || "",
+        deadline: task.deadline ? new Date(task.deadline) : undefined,
+        time: task.time || "0000",
+      });
+    }
+  }, [isForEditing, task, form]);
+
   const onSubmit: SubmitHandler<z.infer<typeof taskSchema>> = async (
     values
   ) => {
-    if(!environmentId || !sessionId) return
-    const taskUUID = v4();
+    if (!environmentId || !sessionId) return;
+
     try {
-      const newTask: Task = {
-        id: taskUUID,
-        title: values.name,
-        description: values.description,
-        created_at: new Date().toISOString(),
-        in_trash: "",
-        environment_id: environmentId,
-        session_id: sessionId,
-        deadline: values?.deadline || null,
-        time: values.time,
-      };
-      const { data, error:createError } = await createTask(newTask);
-      if (createError) {
-        throw new Error();
+      if (isForEditing && task) {
+        const updatedTask = {
+          ...task,
+          title: values.name,
+          description: values.description,
+          deadline: values.deadline || null,
+          time: values.time,
+        };
+        const { error } = await updateTask(updatedTask, task.id);
+        if (error) throw new Error();
+
+        dispatch({
+          type: "UPDATE_TASK",
+          payload: { environmentId, task: updatedTask, sessionId, taskId:task.id },
+        });
+        toast({
+          title: "Task Updated",
+          description: "Task has been updated successfully.",
+        });
+      } else {
+        const taskUUID = v4();
+        const newTask: Task = {
+          id: taskUUID,
+          title: values.name,
+          description: values.description,
+          created_at: new Date().toISOString(),
+          in_trash: "",
+          environment_id: environmentId,
+          session_id: sessionId,
+          deadline: values?.deadline || null,
+          time: values.time,
+        };
+        const { data, error: createError } = await createTask(newTask);
+        if (createError) throw new Error();
+
+        dispatch({
+          type: "ADD_TASK",
+          payload: { environmentId, task: newTask, sessionId },
+        });
+        toast({
+          title: "Task Created",
+          description: "Task has been created successfully.",
+        });
       }
-      dispatch({
-        type: "ADD_TASK",
-        payload: { environmentId, task: newTask, sessionId },
-      })
-      toast({
-        title: "Task Created",
-        description: "Task has been created successfully.",
-      });
     } catch (error) {
-      console.log(error, "Error");
       toast({
         variant: "destructive",
-        title: "Could not create your task",
+        title: isForEditing
+          ? "Could not update your task"
+          : "Could not create your task",
         description:
-          "Oops! Something went wrong, and we couldn't create your task. Try again or come back later.",
+          "Oops! Something went wrong. Try again or come back later.",
       });
-
-    }finally{
+    } finally {
       form.reset();
     }
   };
