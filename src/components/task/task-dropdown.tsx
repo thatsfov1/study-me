@@ -6,7 +6,7 @@ import {
   AccordionTrigger,
 } from "../ui/accordion";
 import TooltipComponent from "../global/tooltip-component";
-import { PencilLine, Trash } from "lucide-react";
+import { CalendarIcon, PencilLine, Trash } from "lucide-react";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { useAppState } from "@/lib/providers/state-provider";
 import { updateTask } from "@/lib/supabase/queries";
@@ -18,7 +18,7 @@ type TaskDropdownProps = {
 };
 
 const TaskDropdown: React.FC<TaskDropdownProps> = ({ task }) => {
-  const { title, description, id } = task;
+  const { title, description, id, deadline } = task;
   const { state, dispatch, environmentId, sessionId } = useAppState();
   const { user } = useSupabaseUser();
   const { toast } = useToast();
@@ -90,7 +90,13 @@ const TaskDropdown: React.FC<TaskDropdownProps> = ({ task }) => {
         </div>
       </AccordionTrigger>
       <AccordionContent className="text-muted-foreground">
-        {description}
+        <div className="flex flex-col gap-4">
+          <p>{description}</p>
+          {deadline && <p className='flex gap-2 items-center'>
+            <CalendarIcon className="h-4 w-4 " />
+            {deadline.toDateString()}
+          </p>}
+        </div>
       </AccordionContent>
     </AccordionItem>
   );
