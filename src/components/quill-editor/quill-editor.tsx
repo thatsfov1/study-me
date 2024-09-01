@@ -35,11 +35,13 @@ import { Badge } from "../ui/badge";
 import { useSocket } from "@/lib/providers/socket-provider";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { Plus, PlusIcon } from "lucide-react";
+import { Plus, PlusIcon, ArrowRight } from "lucide-react";
 import { appSessionsType } from "@/lib/providers/state-provider";
 import Task from "../task/task-setup";
 import TaskDropdown from "../task/task-dropdown";
 import { Accordion } from "../ui/accordion";
+import clsx from "clsx";
+import TooltipComponent from "../global/tooltip-component";
 
 interface QuillEditorProps {
   dirDetails: Session | environment;
@@ -53,6 +55,8 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId }) => {
   const [collaborators, setCollaborators] = useState<
     { id: string; email: string; avatarUrl: string }[]
   >([]);
+  const [chosenBreak, setChosenBreak] = useState(1);
+  const [isTitleEditing, setIsTitleEditing] = useState(false);
   const { user } = useSupabaseUser();
   const [saving, setSaving] = useState(false);
   const [localCursors, setLocalCursors] = useState<any>([]);
@@ -60,6 +64,11 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId }) => {
   const [tasks, setTasks] = useState<TTask[]>();
   const router = useRouter();
   const pathname = usePathname();
+
+  const breakOptions = [
+    { id: 1, label: "60:10", message:"60 minutes of work and 10-minute break" },
+    { id: 2, label: "30:5",message:"30 minutes of work and 5-minute break" },
+  ];
 
   useEffect(() => {
     if (!sessionId || !environmentId) return;
@@ -138,6 +147,35 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId }) => {
     }
   }, [state, pathname, environmentId]);
 
+  const handleDoubleClick = () => {
+    setIsTitleEditing(true);
+  };
+
+  const handleBlur = async () => {
+    setIsTitleEditing(false);
+    if (!sessionTitle) return;
+    await updateSession({ title:details.title }, details.id);
+  };
+
+  const sessionTitle: string | undefined = useMemo(() => {
+    const stateTitle = state.environments
+      .find((environment) => environment.id === environmentId)
+      ?.sessions.find((session) => session.id === details.id)?.title;
+    if (details.title === stateTitle || !stateTitle) return details.title;
+    return stateTitle;
+  }, [state, environmentId]);
+
+  const sessionTitleChange = (e: any) => {
+    if (!environmentId) return;
+    dispatch({
+      type: "UPDATE_SESSION",
+      payload: {
+        session: { title: e.target.value },
+        sessionId: details.id,
+        environmentId,
+      },
+    });
+  };
   // const wrapperRef = useCallback(async (wrapper: any) => {
   //   if (typeof window !== "undefined") {
   //     if (wrapper === null) return;
@@ -463,9 +501,21 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId }) => {
           
          lg:my-8"
         >
-          <span className="text-muted-foreground text-3xl font-bold h-9">
+          <input
+              onDoubleClick={handleDoubleClick}
+              onBlur={handleBlur}
+              readOnly={!isTitleEditing}
+              type="text"
+              value={sessionTitle}
+              onChange={sessionTitleChange}
+              className={clsx("text-3xl font-bold h-9 p-2 outline-none", {
+                "cursor-text text-neutral-700 border border-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-background rounded-sm": isTitleEditing,
+                "text-muted-foreground outline-none": !isTitleEditing,
+              })}
+            />
+          {/* <span className="text-muted-foreground text-3xl font-bold h-9">
             {details.title}
-          </span>
+          </span> */}
         </div>
         <Accordion
           type="multiple"
@@ -480,12 +530,41 @@ const QuillEditor: React.FC<QuillEditorProps> = ({ dirDetails, fileId }) => {
               return <TaskDropdown key={task.id} task={task} />;
             })}
         </Accordion>
-
         <Task>
           <div className="text-muted-foreground flex rounded-md hover:bg-muted items-center justify-center transition-all  gap-2 p-2 cursor-pointer my-2 w-[300px]">
             <PlusIcon size="16" /> Create a task for the session
           </div>
         </Task>
+        {tasks?.filter((task) => !task.in_trash) &&
+          tasks?.filter((task) => !task.in_trash).length > 0 && (
+            <div
+              className="w-[1000px] fixed bottom-6  z-50 flex items-center justify-between
+            "
+            >
+              <div className="flex items-center gap-5">
+                {breakOptions.map((item) => (
+                  <TooltipComponent message={item.message}>
+                    <span
+                      key={item.id}
+                      onClick={() => setChosenBreak(item.id)}
+                      className={clsx(
+                        "cursor-pointer p-2 rounded-lg transition-all duration-500",
+                        chosenBreak === item.id
+                          ? "bg-black text-white"
+                          : "bg-muted text-black"
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  </TooltipComponent>
+                ))}{" "}
+              </div>
+              <Button className=" flex items-center justify-center gap-3 w-[300px]">
+                Move to the next step
+                <ArrowRight size="18" />
+              </Button>
+            </div>
+          )}
       </div>
     </>
   );

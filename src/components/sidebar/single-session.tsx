@@ -10,14 +10,14 @@ import { Trash } from "lucide-react";
 import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { useToast } from "../ui/use-toast";
 
-interface DropdownProps {
+interface SingleSessionProps {
   title: string;
   id: string;
   disabled?: boolean;
   children?: React.ReactNode;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({
+const SingleSession: React.FC<SingleSessionProps> = ({
   title,
   id,
   disabled,
@@ -134,4 +134,4 @@ const Dropdown: React.FC<DropdownProps> = ({
   );
 };
 
-export default Dropdown;
+export default SingleSession;

@@ -8,8 +8,7 @@ import { useSupabaseUser } from "@/lib/providers/supabase-user-provider";
 import { v4 } from "uuid";
 import { useToast } from "../ui/use-toast";
 import { createSession } from "@/lib/supabase/queries";
-import { Accordion } from "../ui/accordion";
-import Dropdown from "./dropdown";
+import SingleSession from "./single-session";
 import useSupabaseRealtime from "@/lib/hooks/useSupabaseRealtime";
 import { useSubscriptionModal } from "@/lib/providers/subscription-modal-provider";
 
@@ -128,7 +127,7 @@ const SessionsDropdownList: React.FC<SessionsDropdownListProps> = ({
         {sessions
           .filter((session) => !session.in_trash)
           .map((session) => (
-            <Dropdown key={session.id} title={session.title} id={session.id} />
+            <SingleSession key={session.id} title={session.title} id={session.id} />
           ))}
       </div>
     </>

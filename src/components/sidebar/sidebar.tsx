@@ -14,7 +14,7 @@ import EnvironmentDropdown from "./environment-dropdown";
 import PlanUsage from "./plan-usage";
 import NativeNavigation from "./native-navigation";
 import { ScrollArea } from "../ui/scroll-area";
-import SessionsDropdownList from "./sessions-dropdown-list";
+import SessionsDropdownList from "./sessions-list";
 import UserCard from "./user-card";
 
 interface SidebarProps {
